@@ -43,7 +43,7 @@ const Register = ({ navigation }: Props) => {
     const postData = new URLSearchParams();
     postData.append('email', email);
     postData.append('password', password); // Send the plain password (PHP will hash it)
-    postData.append('firebase_uid', firebase_uid);
+    postData.append('firebase_uid', firebase_uid); // Ensure this is correct
     postData.append('idToken', idToken);  // Send the Firebase ID token for verification
 
     fetch(apiURL, {
