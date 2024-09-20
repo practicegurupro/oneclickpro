@@ -49,6 +49,7 @@ const Login = ({ navigation }: Props) => {
                 contactbar: jsonData.contactbar,
                 subscribedCategories: jsonData.subscribed_categories,
                 nonSubscribedCategories: jsonData.non_subscribed_categories,
+                idToken: idToken, // Ensure idToken is also stored
               });
   
               // Navigate to CategoryScreen

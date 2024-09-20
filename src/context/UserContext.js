@@ -9,6 +9,7 @@ export const UserProvider = ({ children }) => {
     contactbar: null,
     subscribedCategories: [], // Separate array for subscribed categories
     nonSubscribedCategories: [], // Separate array for non-subscribed categories
+    idToken: null, // Add idToken here
   });
 
   return (

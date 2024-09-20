@@ -8,6 +8,9 @@ import auth from '@react-native-firebase/auth';
 import Login from './src/screens/Login';
 import Register from './src/screens/Register';
 import CategoryScreen from './src/screens/CategoryScreen'; 
+import PostersTypesScreen from './src/screens/PostersTypesScreen'; 
+import PostersListScreen from './src/screens/PostersListScreen.tsx'; 
+import ImageShareScreen from './src/screens/ImageShareScreen.tsx'; 
 import Profile from './src/screens/Profile';
 import { UserProvider } from './src/context/UserContext'; // Import UserProvider
 
@@ -24,9 +27,13 @@ const AuthStackNavigator = () => (
 const MainStackNavigator = () => (
   <RootStack.Navigator initialRouteName="CategoryScreen">
     <RootStack.Screen name="CategoryScreen" component={CategoryScreen} />
-    {/* You can add more screens here as needed */}
+    <RootStack.Screen name="PostersTypesScreen" component={PostersTypesScreen} />
+    <RootStack.Screen name="PostersListScreen" component={PostersListScreen} />
+    <RootStack.Screen name="ImageShareScreen" component={ImageShareScreen} />
+    {/* Add more screens here as needed */}
   </RootStack.Navigator>
 );
+
 
 const LogoutScreen = ({ navigation }) => {
   const handleLogout = () => {

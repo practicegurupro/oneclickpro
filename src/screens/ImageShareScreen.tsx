@@ -1,16 +1,21 @@
 import React, { useRef } from 'react';
 import { View, Text, Image, Button, PermissionsAndroid, Platform, Alert, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Share as NativeShare } from 'react-native';
 import ViewShot from 'react-native-view-shot'; // To capture the screen
-import Share from 'react-native-share'; // For sharing (Android only)
-import RNFS from 'react-native-fs'; // For file system (Android only)
+import Share from 'react-native-share'; // For sharing on Android
+import RNFS from 'react-native-fs'; // For file system operations on Android
 
 // Get the screen width to dynamically adjust the image size
 const screenWidth = Dimensions.get('window').width;
 const containerWidth = screenWidth * 0.9; // Set the width to 90% of the screen width to leave margins
 const containerHeight = (containerWidth / 1080) * 1350; // Calculate height based on the Instagram portrait aspect ratio
 
-const ImageShareScreen = () => {
+const ImageShareScreen = ({ route }) => {
   const viewShotRef = useRef(null);
+  const { posterImageUrl, contactBarImageUrl } = route.params; // Get the passed parameters from the route
+
+  // Debugging logs to check the passed parameters
+  console.log('Poster Image URL:', posterImageUrl);  
+  console.log('Contact Bar URL:', contactBarImageUrl);
 
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 30) {
@@ -88,11 +93,11 @@ const ImageShareScreen = () => {
         <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: 'https://practiceguru.pro/ProjectFoodInfo/onclickimages/notpaid/cmp08_octdec23_18jan24_ver2.png' }}
+              source={{ uri: posterImageUrl || '' }} // Ensure the poster image URL is passed correctly
               style={styles.firstImage}
             />
             <Image
-              source={{ uri: 'https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png' }}
+              source={{ uri: contactBarImageUrl || '' }} // Ensure the contact bar URL is passed correctly
               style={styles.secondImage}
             />
           </View>
@@ -110,6 +115,7 @@ const ImageShareScreen = () => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

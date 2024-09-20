@@ -1,13 +1,24 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import UserContext from '../context/UserContext';
 
-const CategoryScreen = () => {
+const CategoryScreen = ({ navigation }) => {
   const { user } = useContext(UserContext);
 
   // Extract the subscribed and non-subscribed categories from the user context
   const subscribedCategories = user?.subscribedCategories || [];
   const nonSubscribedCategories = user?.nonSubscribedCategories || [];
+
+  const handleCategoryPress = (category) => {
+    if (user?.idToken) {
+      navigation.navigate('PostersTypesScreen', { idToken: user.idToken, selectedCategory: category });
+    } else {
+      console.error('Error: idToken is undefined');
+      Alert.alert('Error', 'Unable to authenticate. Please log in again.');
+    }
+  };
+  
+  
 
   return (
     <View style={styles.container}>
@@ -17,11 +28,13 @@ const CategoryScreen = () => {
           data={subscribedCategories}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.categoryContainer}>
-              <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {item.category_name}</Text>
-              <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {item.start_date}</Text>
-              <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {item.end_date}</Text>
-            </View>
+            <TouchableOpacity onPress={() => handleCategoryPress(item)}>
+              <View style={styles.categoryContainer}>
+                <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {item.category_name}</Text>
+                <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {item.start_date}</Text>
+                <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {item.end_date}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
@@ -34,9 +47,11 @@ const CategoryScreen = () => {
           data={nonSubscribedCategories}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.categoryContainer}>
-              <Text style={styles.info}>{item.category_name}</Text>
-            </View>
+            <TouchableOpacity onPress={() => handleCategoryPress(item)}>
+              <View style={styles.categoryContainer}>
+                <Text style={styles.info}>{item.category_name}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
