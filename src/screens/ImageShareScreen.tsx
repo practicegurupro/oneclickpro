@@ -1,20 +1,71 @@
-import React, { useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, Text, Image, Button, PermissionsAndroid, Platform, Alert, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Share as NativeShare } from 'react-native';
-import ViewShot from 'react-native-view-shot'; // To capture the screen
-import Share from 'react-native-share'; // For sharing on Android
-import RNFS from 'react-native-fs'; // For file system operations on Android
+import ViewShot from 'react-native-view-shot';
+import Share from 'react-native-share';
+import RNFS from 'react-native-fs';
+import UserContext from '../context/UserContext';
+import { useNavigation } from '@react-navigation/native';
 
-// Get the screen width to dynamically adjust the image size
 const screenWidth = Dimensions.get('window').width;
-const containerWidth = screenWidth * 0.9; // Set the width to 90% of the screen width to leave margins
-const containerHeight = (containerWidth / 1080) * 1350; // Calculate height based on the Instagram portrait aspect ratio
+const containerWidth = screenWidth * 0.9;
+const containerHeight = (containerWidth / 1080) * 1350;
 
 const ImageShareScreen = ({ route }) => {
+  const navigation = useNavigation();
   const viewShotRef = useRef(null);
-  const { posterImageUrl, contactBarImageUrl } = route.params; // Get the passed parameters from the route
+  const { selectedCategory, selectedCategoryId, posterImageUrl } = route.params;
+  const { user } = useContext(UserContext);
+  const [contactBarImageUrl, setContactBarImageUrl] = useState('');
 
-  // Debugging logs to check the passed parameters
-  console.log('Poster Image URL:', posterImageUrl);  
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          onPress={() => navigation.navigate('CategoryScreen')}
+          title="Go to Home"
+          color="#000"
+        />
+      ),
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    const currentDate = new Date();
+    const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
+    const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
+
+    console.log('Is Subscribed (Paid) Category:', isSubscribed);
+
+    if (isSubscribed) {
+      fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          idToken: user.idToken,
+          categoryId: selectedCategoryId,
+        }).toString(),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            setContactBarImageUrl(`https://practiceguru.pro/images/${data.contactbar}`);
+          } else {
+            setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+            console.warn('No contact bar found, using default.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    } else {
+      // If not subscribed, set to default contact bar
+      setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+    }
+  }, [selectedCategoryId, user.idToken]);
+
+  console.log('Poster Image URL:', posterImageUrl);
   console.log('Contact Bar URL:', contactBarImageUrl);
 
   const requestStoragePermission = async () => {
@@ -36,7 +87,7 @@ const ImageShareScreen = ({ route }) => {
         return false;
       }
     }
-    return true; // For Android 11 and above, no permission is needed
+    return true;
   };
 
   const captureAndShareScreenshotAndroid = async () => {
@@ -89,15 +140,18 @@ const ImageShareScreen = ({ route }) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.userName}>{user?.email || 'User Name'}</Text>
+      <Text style={styles.categoryName}>{selectedCategory}</Text>
+
       <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
         <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: posterImageUrl || '' }} // Ensure the poster image URL is passed correctly
+              source={{ uri: posterImageUrl || '' }}
               style={styles.firstImage}
             />
             <Image
-              source={{ uri: contactBarImageUrl || '' }} // Ensure the contact bar URL is passed correctly
+              source={{ uri: contactBarImageUrl || '' }}
               style={styles.secondImage}
             />
           </View>

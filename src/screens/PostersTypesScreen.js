@@ -35,12 +35,17 @@ const PostersTypesScreen = ({ route, navigation }) => {
 
   // Ensure that selectedCategory is a string
   const categoryName = typeof selectedCategory === 'object' ? selectedCategory.category_name : selectedCategory;
-
+  
 
 
   const handlePosterTypePress = (posterType) => {
     // Extract category_name from the selectedCategory object
     const categoryName = selectedCategory.category_name;
+    const categoryId = selectedCategory.id; 
+
+      // Log the categoryId to see if it's being extracted correctly
+  console.log('Extracted categoryId:', categoryId);
+    
   
     if (!categoryName || typeof categoryName !== 'string') {
       console.error('Invalid categoryName:', categoryName);
@@ -59,6 +64,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
     console.log('Navigating to PostersListScreen with:', {
       tableName: tableName,
       selectedCategory: categoryName,
+      selectedCategoryId: categoryId,
       posterType: posterType,
       idToken: user.idToken
     });
@@ -66,6 +72,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
     navigation.navigate('PostersListScreen', {
       tableName: tableName,
       selectedCategory: categoryName,
+      selectedCategoryId: categoryId,
       posterType: posterType,
       idToken: user.idToken // Pass the ID token
     });

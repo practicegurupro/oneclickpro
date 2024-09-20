@@ -3,12 +3,13 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react
 import UserContext from '../context/UserContext';
 
 const PostersListScreen = ({ route, navigation }) => {
-  const { tableName, idToken } = route.params; // Get the table name and ID token from the previous screen
+  const { selectedCategory, selectedCategoryId, tableName, idToken } = route.params;
   const [posters, setPosters] = useState([]);
   const { user } = useContext(UserContext);
 
+  console.log('Extracted categoryId:', selectedCategoryId);
+
   useEffect(() => {
-    // Fetch the posters from the API
     fetch('https://oneclickbranding.ai/fetch_posters_list.php', {
       method: 'POST',
       headers: {
@@ -32,20 +33,52 @@ const PostersListScreen = ({ route, navigation }) => {
       });
   }, [idToken, tableName]);
 
-  const handlePosterPress = (posterImageUrl) => {
-    // Navigate to ImageShareScreen and pass the selected poster image and user's contactbar
+  const handlePosterPress = (posterImageName) => {
+    // Determine if the category is subscribed or not based on the current date and subscription end date
+    const currentDate = new Date();
+    const isSubscribed = user.subscribedCategories.some(category => {
+      const endDate = new Date(category.end_date);
+      return category.id === selectedCategoryId && endDate >= currentDate;
+    });
+
+    console.log('Category ID:', selectedCategoryId);
+    console.log('Category Subscription End Date:', user.subscribedCategories.find(category => category.id === selectedCategoryId)?.end_date);
+    console.log('Is Subscribed (Paid) Category:', isSubscribed);
+    console.log('Poster Name:', posterImageName);
+
+    const posterImageUrl = isSubscribed
+      ? `https://oneclickbranding.ai/posters/paid/${posterImageName}`
+      : `https://oneclickbranding.ai/posters/notpaid/${posterImageName}`;
+
+    console.log('Poster Image URL:', posterImageUrl);
+
     navigation.navigate('ImageShareScreen', {
       posterImageUrl: posterImageUrl,
-      contactBarImageUrl: `https://practiceguru.pro/images/${user.contactbar}`,
+      selectedCategory: selectedCategory,
+      selectedCategoryId: selectedCategoryId,
+      idToken: user.idToken,
+      contactBarImageUrl: `https://practiceguru.pro/images/${user.contactbar}`
     });
   };
 
-  const renderPosterItem = ({ item }) => (
-    <TouchableOpacity style={styles.posterContainer} onPress={() => handlePosterPress(item.poster_image_url)}>
-      <Image source={{ uri: item.poster_image_url }} style={styles.posterImage} />
-      <Text style={styles.posterName}>{item.poster_name}</Text>
-    </TouchableOpacity>
-  );
+  const renderPosterItem = ({ item }) => {
+    const currentDate = new Date();
+    const isSubscribed = user.subscribedCategories.some(category => {
+      const endDate = new Date(category.end_date);
+      return category.id === selectedCategoryId && endDate >= currentDate;
+    });
+
+    const posterImageUrl = isSubscribed
+      ? `https://oneclickbranding.ai/posters/paid/${item.poster_image_url}`
+      : `https://oneclickbranding.ai/posters/notpaid/${item.poster_image_url}`;
+
+    return (
+      <TouchableOpacity style={styles.posterContainer} onPress={() => handlePosterPress(item.poster_image_url)}>
+        <Image source={{ uri: posterImageUrl }} style={styles.posterImage} />
+        <Text style={styles.posterName}>{item.poster_name}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>

@@ -5,9 +5,23 @@ import UserContext from '../context/UserContext';
 const CategoryScreen = ({ navigation }) => {
   const { user } = useContext(UserContext);
 
-  // Extract the subscribed and non-subscribed categories from the user context
-  const subscribedCategories = user?.subscribedCategories || [];
-  const nonSubscribedCategories = user?.nonSubscribedCategories || [];
+  // Get current date
+  const currentDate = new Date();
+
+  // Filter subscribed categories by checking if the current date is within the subscription period
+  const subscribedCategories = user?.subscribedCategories.filter(category => {
+    const endDate = new Date(category.end_date);
+    return endDate >= currentDate;
+  }) || [];
+
+  // Categories with expired subscriptions should be moved to non-subscribed categories
+  const nonSubscribedCategories = [
+    ...user?.nonSubscribedCategories || [],
+    ...user?.subscribedCategories.filter(category => {
+      const endDate = new Date(category.end_date);
+      return endDate < currentDate;
+    }) || [],
+  ];
 
   const handleCategoryPress = (category) => {
     if (user?.idToken) {
@@ -17,8 +31,6 @@ const CategoryScreen = ({ navigation }) => {
       Alert.alert('Error', 'Unable to authenticate. Please log in again.');
     }
   };
-  
-  
 
   return (
     <View style={styles.container}>
