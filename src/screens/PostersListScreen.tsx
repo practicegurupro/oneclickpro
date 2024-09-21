@@ -5,11 +5,15 @@ import UserContext from '../context/UserContext';
 const PostersListScreen = ({ route, navigation }) => {
   const { selectedCategory, selectedCategoryId, tableName, idToken } = route.params;
   const [posters, setPosters] = useState([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [contactBar, setContactBar] = useState('');
+  const [watermark, setWatermark] = useState('');
   const { user } = useContext(UserContext);
 
   console.log('Extracted categoryId:', selectedCategoryId);
 
   useEffect(() => {
+    // Fetch the posters list from the API
     fetch('https://oneclickbranding.ai/fetch_posters_list.php', {
       method: 'POST',
       headers: {
@@ -31,43 +35,53 @@ const PostersListScreen = ({ route, navigation }) => {
       .catch(error => {
         console.error('Error:', error);
       });
-  }, [idToken, tableName]);
+
+    // Fetch the latest subscription status from the API
+    fetch('https://oneclickbranding.ai/subscription_status.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        idToken: idToken,
+        categoryId: selectedCategoryId,
+      }).toString(),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          setIsSubscribed(data.isSubscribed);
+          setContactBar(data.contactbar || 'yourfirmcontactbartaxprofessional.png');
+          setWatermark(data.watermark || 'OneClick Branding');
+        } else {
+          console.error('Error fetching subscription status:', data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }, [idToken, selectedCategoryId, tableName]);
 
   const handlePosterPress = (posterImageName) => {
-    // Determine if the category is subscribed or not based on the current date and subscription end date
-    const currentDate = new Date();
-    const isSubscribed = user.subscribedCategories.some(category => {
-      const endDate = new Date(category.end_date);
-      return category.id === selectedCategoryId && endDate >= currentDate;
-    });
-
-    console.log('Category ID:', selectedCategoryId);
-    console.log('Category Subscription End Date:', user.subscribedCategories.find(category => category.id === selectedCategoryId)?.end_date);
-    console.log('Is Subscribed (Paid) Category:', isSubscribed);
-    console.log('Poster Name:', posterImageName);
-
     const posterImageUrl = isSubscribed
       ? `https://oneclickbranding.ai/posters/paid/${posterImageName}`
       : `https://oneclickbranding.ai/posters/notpaid/${posterImageName}`;
 
-    console.log('Poster Image URL:', posterImageUrl);
+      const contactBarImageUrl = isSubscribed
+      ? `https://practiceguru.pro/images/${contactBar}`
+      : `https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png`;
 
     navigation.navigate('ImageShareScreen', {
       posterImageUrl: posterImageUrl,
       selectedCategory: selectedCategory,
       selectedCategoryId: selectedCategoryId,
       idToken: user.idToken,
-      contactBarImageUrl: `https://practiceguru.pro/images/${user.contactbar}`
+      contactBarImageUrl: contactBarImageUrl,
+      watermarkText: watermark
     });
   };
 
   const renderPosterItem = ({ item }) => {
-    const currentDate = new Date();
-    const isSubscribed = user.subscribedCategories.some(category => {
-      const endDate = new Date(category.end_date);
-      return category.id === selectedCategoryId && endDate >= currentDate;
-    });
-
     const posterImageUrl = isSubscribed
       ? `https://oneclickbranding.ai/posters/paid/${item.poster_image_url}`
       : `https://oneclickbranding.ai/posters/notpaid/${item.poster_image_url}`;

@@ -26,13 +26,30 @@ const AuthStackNavigator = () => (
 
 const MainStackNavigator = () => (
   <RootStack.Navigator initialRouteName="CategoryScreen">
-    <RootStack.Screen name="CategoryScreen" component={CategoryScreen} />
-    <RootStack.Screen name="PostersTypesScreen" component={PostersTypesScreen} />
-    <RootStack.Screen name="PostersListScreen" component={PostersListScreen} />
-    <RootStack.Screen name="ImageShareScreen" component={ImageShareScreen} />
+    <RootStack.Screen 
+      name="CategoryScreen" 
+      component={CategoryScreen} 
+      options={{ headerLeft: () => null }} // Remove back button for this screen
+    />
+    <RootStack.Screen 
+      name="PostersTypesScreen" 
+      component={PostersTypesScreen} 
+    
+    />
+    <RootStack.Screen 
+      name="PostersListScreen" 
+      component={PostersListScreen} 
+    
+    />
+    <RootStack.Screen 
+      name="ImageShareScreen" 
+      component={ImageShareScreen} 
+      options={{ headerLeft: () => null }} // Remove back button for this screen
+    />
     {/* Add more screens here as needed */}
   </RootStack.Navigator>
 );
+
 
 
 const LogoutScreen = ({ navigation }) => {

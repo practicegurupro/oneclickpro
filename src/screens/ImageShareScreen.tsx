@@ -16,6 +16,7 @@ const ImageShareScreen = ({ route }) => {
   const { selectedCategory, selectedCategoryId, posterImageUrl } = route.params;
   const { user } = useContext(UserContext);
   const [contactBarImageUrl, setContactBarImageUrl] = useState('');
+  const [watermarkText, setWatermarkText] = useState('');
 
   useEffect(() => {
     navigation.setOptions({
@@ -47,26 +48,34 @@ const ImageShareScreen = ({ route }) => {
           categoryId: selectedCategoryId,
         }).toString(),
       })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            setContactBarImageUrl(`https://practiceguru.pro/images/${data.contactbar}`);
+      .then(response => response.text())
+      .then(data => {
+        console.log('Raw response:', data);
+        try {
+          const jsonData = JSON.parse(data.trim());
+          if (jsonData.success && jsonData.contactbar) {
+            setContactBarImageUrl(`https://practiceguru.pro/images/${jsonData.contactbar}`);
+            setWatermarkText(jsonData.watermark || 'OneClick Branding');
           } else {
-            setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
-            console.warn('No contact bar found, using default.');
+            throw new Error('Invalid API response or contact bar not found.');
           }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+        } catch (e) {
+          console.error('JSON Parse Error or API Issue:', e);
+          console.log('Failed data:', data);
+          setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+          setWatermarkText('OneClick Branding');
+        }
+      })
+      .catch(error => {
+        console.error('Network or Server Error:', error);
+        setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+        setWatermarkText('OneClick Branding');
+      });
     } else {
-      // If not subscribed, set to default contact bar
       setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+      setWatermarkText('OneClick Branding');
     }
   }, [selectedCategoryId, user.idToken]);
-
-  console.log('Poster Image URL:', posterImageUrl);
-  console.log('Contact Bar URL:', contactBarImageUrl);
 
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 30) {
@@ -150,6 +159,8 @@ const ImageShareScreen = ({ route }) => {
               source={{ uri: posterImageUrl || '' }}
               style={styles.firstImage}
             />
+            {/* Ensure that the watermark text is visible */}
+            <Text style={styles.watermark}>{watermarkText}</Text>
             <Image
               source={{ uri: contactBarImageUrl || '' }}
               style={styles.secondImage}
@@ -194,11 +205,23 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginHorizontal: '5%',
+    position: 'relative',
   },
   firstImage: {
     width: '100%',
     height: '75%',
     resizeMode: 'cover',
+  },
+  watermark: {
+    position: 'absolute',
+    top: '50%',
+    left: '25%',
+    transform: [{ translateX: -50 }, { translateY: -50 }, { rotate: '-45deg' }],
+    fontSize: 24,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    width: '100%',
+    zIndex: 2, // Ensure watermark is above the image
   },
   secondImage: {
     width: '100%',

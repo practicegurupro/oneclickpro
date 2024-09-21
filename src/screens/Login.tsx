@@ -1,9 +1,10 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import UserContext from '../context/UserContext'; // Import UserContext
+import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';  // Define your type for navigation params
+import { RootStackParamList } from './types';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Import an icon library
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -17,7 +18,8 @@ type Props = {
 const Login = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setUser } = useContext(UserContext); // Use setUser from context
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const { setUser } = useContext(UserContext);
 
   const handleLogin = () => {
     auth()
@@ -31,35 +33,31 @@ const Login = ({ navigation }: Props) => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            idToken: idToken, // Send the Firebase ID token
+            idToken: idToken,
           }).toString(),
         })
-        .then(response => response.text())  // Use text() instead of json() to log the raw response
+        .then(response => response.text())
         .then(data => {
-          console.log('Raw response:', data);  // Log the raw response
+          console.log('Raw response:', data);
           
-          // Now try to parse it into JSON
           try {
-            const jsonData = JSON.parse(data.trim());   // Parse the trimmed data
+            const jsonData = JSON.parse(data.trim());
             if (jsonData.success) {
-              // Update the UserContext with the categories and other user details
               setUser({
                 email: jsonData.email,
                 createdAt: jsonData.created_at,
                 contactbar: jsonData.contactbar,
                 subscribedCategories: jsonData.subscribed_categories,
                 nonSubscribedCategories: jsonData.non_subscribed_categories,
-                idToken: idToken, // Ensure idToken is also stored
+                idToken: idToken,
               });
-  
-              // Navigate to CategoryScreen
               navigation.navigate('CategoryScreen');
             } else {
               Alert.alert('Login Error', jsonData.message);
             }
           } catch (e) {
             console.error('Failed to parse JSON:', e);
-            console.log('Data received:', data); // Log data for further inspection
+            console.log('Data received:', data);
             Alert.alert('Error', 'Failed to parse server response.');
           }
         })
@@ -72,9 +70,6 @@ const Login = ({ navigation }: Props) => {
         Alert.alert('Login Error', error.message);
       });
   };
-  
-  
-
 
   return (
     <View style={styles.container}>
@@ -86,13 +81,18 @@ const Login = ({ navigation }: Props) => {
         onChangeText={setEmail}
         keyboardType="email-address"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={[styles.input, { flex: 1 }]}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Icon name={showPassword ? 'visibility' : 'visibility-off'} size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
       <Button title="Login" onPress={handleLogin} />
       <Button
         title="Don't have an account? Register"
@@ -119,6 +119,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingLeft: 8,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingLeft: 8,
+    marginBottom: 12,
   },
 });
 

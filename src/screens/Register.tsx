@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import auth from '@react-native-firebase/auth';
+import UserContext from '../context/UserContext'; // Import UserContext
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';  // Define your type for navigation params
 
@@ -16,6 +17,7 @@ type Props = {
 const Register = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { setUser } = useContext(UserContext); // Use setUser from context
 
   const handleRegister = () => {
     auth()
@@ -56,8 +58,39 @@ const Register = ({ navigation }: Props) => {
       .then(response => response.text())
       .then(data => {
         console.log('Server response:', data);
-        Alert.alert('Success', 'User registered successfully!');
-        navigation.navigate('Login');  // Navigate to Login screen
+
+        // After successful registration, fetch user details as in the login process
+        fetch('https://oneclickbranding.ai/login_api_app.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            idToken: idToken, // Use the same ID token for login API
+          }).toString(),
+        })
+        .then(response => response.json())
+        .then(jsonData => {
+          if (jsonData.success) {
+            setUser({
+              email: jsonData.email,
+              createdAt: jsonData.created_at,
+              contactbar: jsonData.contactbar,
+              subscribedCategories: jsonData.subscribed_categories,
+              nonSubscribedCategories: jsonData.non_subscribed_categories,
+              idToken: idToken,
+            });
+
+            // Navigate to CategoryScreen directly after registration
+            navigation.navigate('CategoryScreen');
+          } else {
+            Alert.alert('Registration Error', jsonData.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user data after registration:', error);
+          Alert.alert('Network Error', 'There was an error connecting to the server.');
+        });
       })
       .catch(error => {
         console.error('Error saving user to the database:', error);
