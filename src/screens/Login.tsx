@@ -38,7 +38,7 @@ const Login = ({ navigation }: Props) => {
         })
         .then(response => response.text())
         .then(data => {
-          console.log('Raw response:', data);
+          // console.log('Raw response:', data);
           
           try {
             const jsonData = JSON.parse(data.trim());

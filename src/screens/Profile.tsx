@@ -1,31 +1,72 @@
-import React, { useContext } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { DrawerActions } from '@react-navigation/native';
-import UserContext from '../context/UserContext'; // Import UserContext
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { DrawerActions, useIsFocused } from '@react-navigation/native';
+import UserContext from '../context/UserContext';
 
 const Profile = ({ navigation }) => {
-  // Access user data from UserContext
   const { user } = useContext(UserContext);
+  const isFocused = useIsFocused(); // Hook to detect if screen is focused
+  const [profileData, setProfileData] = useState({
+    email: 'Unknown',
+    createdAt: 'Unknown',
+    contactbar: 'Unknown',
+    subscribedCategories: [],
+  });
 
-  // Use the user data from context
-  const email = user?.email || 'Unknown';
-  const createdAt = user?.createdAt || 'Unknown';
-  const contactbar = user?.contactbar || 'Unknown';
-  const subscribedCategories = user?.subscribedCategories || [];
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch('https://oneclickbranding.ai/latestsubscription.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken: user.idToken, // Send the ID token as a JSON object
+          }),
+        });
+
+        const responseText = await response.text(); // Get raw text response
+        console.log('Raw response:', responseText); // Log raw response
+
+        try {
+          const data = JSON.parse(responseText.trim()); // Attempt to parse JSON
+          if (data.success) {
+            setProfileData({
+              email: data.email,
+              createdAt: data.created_at,
+              contactbar: data.contactbar,
+              subscribedCategories: data.subscribed_categories,
+            });
+          } else {
+            Alert.alert('Error', data.message || 'Failed to fetch profile data.');
+          }
+        } catch (jsonError) {
+          console.error('JSON Parse Error:', jsonError);
+          Alert.alert('Error', 'Failed to parse server response as JSON.');
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+        Alert.alert('Error', 'Something went wrong while fetching profile data.');
+      }
+    };
+
+    if (isFocused) {
+      fetchProfileData(); // Fetch data when the screen is focused
+    }
+  }, [isFocused, user.idToken]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile Screen</Text>
 
-      {/* Display email, created_at, and contactbar details */}
-      <Text style={styles.info}><Text style={styles.boldText}>Email:</Text> {email}</Text>
-      <Text style={styles.info}><Text style={styles.boldText}>Account Created At:</Text> {createdAt}</Text>
-      <Text style={styles.info}><Text style={styles.boldText}>Contactbar:</Text> {contactbar}</Text>
+      <Text style={styles.info}><Text style={styles.boldText}>Email:</Text> {profileData.email}</Text>
+      <Text style={styles.info}><Text style={styles.boldText}>Account Created At:</Text> {profileData.createdAt}</Text>
+      <Text style={styles.info}><Text style={styles.boldText}>Contactbar:</Text> {profileData.contactbar}</Text>
 
-      {/* Display user subscribed categories */}
       <Text style={styles.title}>Subscribed Categories:</Text>
-      {subscribedCategories.length > 0 ? (
-        subscribedCategories.map((category, index) => (
+      {profileData.subscribedCategories.length > 0 ? (
+        profileData.subscribedCategories.map((category, index) => (
           <View key={index} style={styles.categoryContainer}>
             <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {category.category_name}</Text>
             <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {category.start_date}</Text>

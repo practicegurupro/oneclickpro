@@ -1,36 +1,69 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useContext, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import UserContext from '../context/UserContext';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
-const CategoryScreen = ({ navigation }) => {
+const CategoryScreen = () => {
   const { user } = useContext(UserContext);
+  const navigation = useNavigation();
+  const isFocused = useIsFocused(); // Hook to detect if screen is focused
+  const [subscribedCategories, setSubscribedCategories] = useState([]);
+  const [nonSubscribedCategories, setNonSubscribedCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get current date
-  const currentDate = new Date();
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        console.log('User ID Token:', user.idToken);
 
-  // Filter subscribed categories by checking if the current date is within the subscription period
-  const subscribedCategories = user?.subscribedCategories.filter(category => {
-    const endDate = new Date(category.end_date);
-    return endDate >= currentDate;
-  }) || [];
+        const response = await fetch('https://oneclickbranding.ai/newsubscriptiondetails.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken: user.idToken,
+          }),
+        });
 
-  // Categories with expired subscriptions should be moved to non-subscribed categories
-  const nonSubscribedCategories = [
-    ...user?.nonSubscribedCategories || [],
-    ...user?.subscribedCategories.filter(category => {
-      const endDate = new Date(category.end_date);
-      return endDate < currentDate;
-    }) || [],
-  ];
+        const data = await response.text();
+        console.log('Raw response:', data);
+
+        const jsonData = JSON.parse(data.trim());
+        if (jsonData.success) {
+          setSubscribedCategories(jsonData.subscribed_categories);
+          setNonSubscribedCategories(jsonData.non_subscribed_categories);
+        } else {
+          Alert.alert('Error', jsonData.message || 'Failed to fetch categories.');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        Alert.alert('Error', 'Something went wrong while fetching categories.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isFocused) {
+      setLoading(true); // Reset loading state when refetching
+      fetchCategories(); // Fetch data when the screen is focused
+    }
+  }, [isFocused, user.idToken]); // Re-fetch when the screen is focused
 
   const handleCategoryPress = (category) => {
-    if (user?.idToken) {
-      navigation.navigate('PostersTypesScreen', { idToken: user.idToken, selectedCategory: category });
-    } else {
-      console.error('Error: idToken is undefined');
-      Alert.alert('Error', 'Unable to authenticate. Please log in again.');
-    }
+    navigation.navigate('PostersTypesScreen', {
+      selectedCategory: category,
+      idToken: user.idToken,
+    });
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
