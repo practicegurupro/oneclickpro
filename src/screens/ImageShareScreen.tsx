@@ -4,7 +4,7 @@ import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import UserContext from '../context/UserContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 const containerWidth = screenWidth * 0.9;
@@ -15,6 +15,7 @@ const ImageShareScreen = ({ route }) => {
   const viewShotRef = useRef(null);
   const { selectedCategory, selectedCategoryId, posterImageUrl } = route.params;
   const { user } = useContext(UserContext);
+  const isFocused = useIsFocused(); // Hook to detect if the screen is focused
   const [contactBarImageUrl, setContactBarImageUrl] = useState('');
   const [watermarkText, setWatermarkText] = useState('');
 
@@ -31,51 +32,53 @@ const ImageShareScreen = ({ route }) => {
   }, [navigation]);
 
   useEffect(() => {
-    const currentDate = new Date();
-    const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
-    const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
+    if (isFocused) {
+      const currentDate = new Date();
+      const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
+      const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
 
-    console.log('Is Subscribed (Paid) Category:', isSubscribed);
+      console.log('Is Subscribed (Paid) Category:', isSubscribed);
 
-    if (isSubscribed) {
-      fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          idToken: user.idToken,
-          categoryId: selectedCategoryId,
-        }).toString(),
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log('Raw response:', data);
-        try {
-          const jsonData = JSON.parse(data.trim());
-          if (jsonData.success && jsonData.contactbar) {
-            setContactBarImageUrl(`https://practiceguru.pro/images/${jsonData.contactbar}`);
-            setWatermarkText(jsonData.watermark || 'OneClick Branding');
-          } else {
-            throw new Error('Invalid API response or contact bar not found.');
+      if (isSubscribed) {
+        fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            idToken: user.idToken,
+            categoryId: selectedCategoryId,
+          }).toString(),
+        })
+        .then(response => response.text())
+        .then(data => {
+          console.log('Raw response:', data);
+          try {
+            const jsonData = JSON.parse(data.trim());
+            if (jsonData.success && jsonData.contactbar) {
+              setContactBarImageUrl(`https://practiceguru.pro/images/${jsonData.contactbar}`);
+              setWatermarkText(jsonData.watermark || 'OneClick Branding');
+            } else {
+              throw new Error('Invalid API response or contact bar not found.');
+            }
+          } catch (e) {
+            console.error('JSON Parse Error or API Issue:', e);
+            console.log('Failed data:', data);
+            setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
+            setWatermarkText('OneClick Branding');
           }
-        } catch (e) {
-          console.error('JSON Parse Error or API Issue:', e);
-          console.log('Failed data:', data);
+        })
+        .catch(error => {
+          console.error('Network or Server Error:', error);
           setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
           setWatermarkText('OneClick Branding');
-        }
-      })
-      .catch(error => {
-        console.error('Network or Server Error:', error);
+        });
+      } else {
         setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
         setWatermarkText('OneClick Branding');
-      });
-    } else {
-      setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
-      setWatermarkText('OneClick Branding');
+      }
     }
-  }, [selectedCategoryId, user.idToken]);
+  }, [isFocused, selectedCategoryId, user.idToken]); // Re-fetch data when the screen is focused
 
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 30) {
@@ -206,6 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: '5%',
     position: 'relative',
+    marginBottom: 20,
   },
   firstImage: {
     width: '100%',
@@ -240,6 +244,7 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: 'white',
     fontSize: 18,
+    marginTop: 10,
   },
 });
 

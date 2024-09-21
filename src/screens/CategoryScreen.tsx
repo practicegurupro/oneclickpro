@@ -91,9 +91,10 @@ const CategoryScreen = () => {
         <FlatList
           data={nonSubscribedCategories}
           keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handleCategoryPress(item)}>
-              <View style={styles.categoryContainer}>
+              <View style={styles.categoryContainerTwoColumns}>
                 <Text style={styles.info}>{item.category_name}</Text>
               </View>
             </TouchableOpacity>
@@ -129,6 +130,15 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 10,
     elevation: 2,
+  },
+  categoryContainerTwoColumns: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginVertical: 10,
+    marginHorizontal: 10, // Add horizontal margin for spacing between columns
+    borderRadius: 10,
+    elevation: 2,
+    flex: 1, // Make sure the container takes up equal space
   },
 });
 

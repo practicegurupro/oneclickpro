@@ -1,16 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
 import UserContext from '../context/UserContext';
 
 const PostersListScreen = ({ route, navigation }) => {
   const { selectedCategory, selectedCategoryId, tableName, idToken } = route.params;
   const [posters, setPosters] = useState([]);
+  const [filteredPosters, setFilteredPosters] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [contactBar, setContactBar] = useState('');
   const [watermark, setWatermark] = useState('');
   const { user } = useContext(UserContext);
-
-  console.log('Extracted categoryId:', selectedCategoryId);
 
   useEffect(() => {
     // Fetch the posters list from the API
@@ -28,6 +28,7 @@ const PostersListScreen = ({ route, navigation }) => {
       .then(data => {
         if (data.success) {
           setPosters(data.posters);
+          setFilteredPosters(data.posters); // Initially, all posters are shown
         } else {
           console.error('Error fetching posters:', data.message);
         }
@@ -67,7 +68,7 @@ const PostersListScreen = ({ route, navigation }) => {
       ? `https://oneclickbranding.ai/posters/paid/${posterImageName}`
       : `https://oneclickbranding.ai/posters/notpaid/${posterImageName}`;
 
-      const contactBarImageUrl = isSubscribed
+    const contactBarImageUrl = isSubscribed
       ? `https://practiceguru.pro/images/${contactBar}`
       : `https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png`;
 
@@ -79,6 +80,20 @@ const PostersListScreen = ({ route, navigation }) => {
       contactBarImageUrl: contactBarImageUrl,
       watermarkText: watermark
     });
+  };
+
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+
+    if (text) {
+      const filtered = posters.filter(poster =>
+        poster.description.toLowerCase().includes(text.toLowerCase()) ||
+        poster.keywords.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredPosters(filtered);
+    } else {
+      setFilteredPosters(posters); // Reset to all posters if search query is empty
+    }
   };
 
   const renderPosterItem = ({ item }) => {
@@ -96,8 +111,14 @@ const PostersListScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search posters..."
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
       <FlatList
-        data={posters}
+        data={filteredPosters}
         keyExtractor={item => item.id.toString()}
         renderItem={renderPosterItem}
         ListEmptyComponent={() => <Text>No posters available</Text>}
@@ -111,6 +132,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+  },
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20,
   },
   posterContainer: {
     flex: 1,
