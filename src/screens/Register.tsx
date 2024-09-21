@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import UserContext from '../context/UserContext'; // Import UserContext
+import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './types';  // Define your type for navigation params
+import { RootStackParamList } from './types';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -17,9 +17,24 @@ type Props = {
 const Register = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setUser } = useContext(UserContext); // Use setUser from context
+  const { setUser } = useContext(UserContext);
 
   const handleRegister = () => {
+    if (!email || !password) {
+      Alert.alert('Validation Error', 'Email and password cannot be blank.');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      Alert.alert('Validation Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password should be at least 6 characters long.');
+      return;
+    }
+
     auth()
       .createUserWithEmailAndPassword(email, password)
       .then(userCredential => {
@@ -34,19 +49,33 @@ const Register = ({ navigation }: Props) => {
       })
       .catch(error => {
         console.error('Error creating user in Firebase:', error);
-        Alert.alert('Register Error', error.message);
+        let errorMessage = 'Registration failed. Please try again.';
+
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'That email address is already in use!';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'That email address is invalid!';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'The password is too weak. Please choose a stronger password.';
+        }
+
+        Alert.alert('Register Error', errorMessage);
       });
   };
 
-  // Function to send the registered user data to the PHP API
+  const validateEmail = (email: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
   const saveUserToDatabase = (email: string, password: string, firebase_uid: string, idToken: string) => {
-    const apiURL = 'https://oneclickbranding.ai/register_user.php'; // Your PHP API endpoint
+    const apiURL = 'https://oneclickbranding.ai/register_user.php';
 
     const postData = new URLSearchParams();
     postData.append('email', email);
     postData.append('password', password); // Send the plain password (PHP will hash it)
-    postData.append('firebase_uid', firebase_uid); // Ensure this is correct
-    postData.append('idToken', idToken);  // Send the Firebase ID token for verification
+    postData.append('firebase_uid', firebase_uid); 
+    postData.append('idToken', idToken);
 
     fetch(apiURL, {
       method: 'POST',
@@ -66,7 +95,7 @@ const Register = ({ navigation }: Props) => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            idToken: idToken, // Use the same ID token for login API
+            idToken: idToken,
           }).toString(),
         })
         .then(response => response.json())
@@ -107,6 +136,7 @@ const Register = ({ navigation }: Props) => {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}

@@ -4,7 +4,7 @@ import auth from '@react-native-firebase/auth';
 import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Import an icon library
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -18,10 +18,15 @@ type Props = {
 const Login = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
   const { setUser } = useContext(UserContext);
 
   const handleLogin = () => {
+    if (!email || !password) {
+      Alert.alert('Validation Error', 'Email and password cannot be blank.');
+      return;
+    }
+
     auth()
       .signInWithEmailAndPassword(email, password)
       .then(async (userCredential) => {
@@ -38,8 +43,6 @@ const Login = ({ navigation }: Props) => {
         })
         .then(response => response.text())
         .then(data => {
-          // console.log('Raw response:', data);
-          
           try {
             const jsonData = JSON.parse(data.trim());
             if (jsonData.success) {
@@ -67,7 +70,17 @@ const Login = ({ navigation }: Props) => {
         });
       })
       .catch(error => {
-        Alert.alert('Login Error', error.message);
+        let errorMessage = 'Login failed. Please try again.';
+
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'No user found with this email.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'The email address is invalid.';
+        }
+
+        Alert.alert('Login Error', errorMessage);
       });
   };
 
