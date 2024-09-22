@@ -5,6 +5,7 @@ import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import UserContext from '../context/UserContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 
 const screenWidth = Dimensions.get('window').width;
 const containerWidth = screenWidth * 0.9;
@@ -33,27 +34,37 @@ const ImageShareScreen = ({ route }) => {
 
   useEffect(() => {
     if (isFocused) {
-      const currentDate = new Date();
-      const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
-      const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
+      const fetchContactBar = async () => {
+        try {
+          // Refresh the ID token
+          const idToken = await auth().currentUser?.getIdToken(true);
+          console.log('Retrieved ID token:', idToken);
 
-      console.log('Is Subscribed (Paid) Category:', isSubscribed);
+          if (!idToken) {
+            throw new Error('Failed to retrieve ID token');
+          }
 
-      if (isSubscribed) {
-        fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            idToken: user.idToken,
-            categoryId: selectedCategoryId,
-          }).toString(),
-        })
-        .then(response => response.text())
-        .then(data => {
-          console.log('Raw response:', data);
-          try {
+          const currentDate = new Date();
+          const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
+          const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
+
+          console.log('Is Subscribed (Paid) Category:', isSubscribed);
+
+          if (isSubscribed) {
+            const response = await fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams({
+                idToken: idToken,
+                categoryId: selectedCategoryId,
+              }).toString(),
+            });
+
+            const data = await response.text();
+            console.log('Raw response:', data);
+
             const jsonData = JSON.parse(data.trim());
             if (jsonData.success && jsonData.contactbar) {
               setContactBarImageUrl(`https://practiceguru.pro/images/${jsonData.contactbar}`);
@@ -61,24 +72,20 @@ const ImageShareScreen = ({ route }) => {
             } else {
               throw new Error('Invalid API response or contact bar not found.');
             }
-          } catch (e) {
-            console.error('JSON Parse Error or API Issue:', e);
-            console.log('Failed data:', data);
+          } else {
             setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
             setWatermarkText('OneClick Branding');
           }
-        })
-        .catch(error => {
-          console.error('Network or Server Error:', error);
+        } catch (error) {
+          console.error('Error fetching contact bar:', error);
           setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
           setWatermarkText('OneClick Branding');
-        });
-      } else {
-        setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
-        setWatermarkText('OneClick Branding');
-      }
+        }
+      };
+
+      fetchContactBar(); // Fetch the contact bar when the screen is focused
     }
-  }, [isFocused, selectedCategoryId, user.idToken]); // Re-fetch data when the screen is focused
+  }, [isFocused, selectedCategoryId, user.subscribedCategories]);
 
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 30) {

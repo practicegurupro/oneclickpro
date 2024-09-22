@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -146,10 +146,9 @@ const Register = ({ navigation }: Props) => {
         secureTextEntry
       />
       <Button title="Register" onPress={handleRegister} />
-      <Button
-        title="Already have an account? Login"
-        onPress={() => navigation.navigate('Login')}
-      />
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.linkText}>Already have an account? Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -171,6 +170,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingLeft: 8,
+  },
+  linkText: {
+    color: 'blue', // Choose a color that looks like a link
+    textDecorationLine: 'underline',
+    marginTop: 20, // Adjust spacing as needed
+    fontSize: 16,
+    textAlign: 'center', // Center the text within its container
   },
 });
 

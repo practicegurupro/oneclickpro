@@ -107,10 +107,9 @@ const Login = ({ navigation }: Props) => {
         </TouchableOpacity>
       </View>
       <Button title="Login" onPress={handleLogin} />
-      <Button
-        title="Don't have an account? Register"
-        onPress={() => navigation.navigate('Register')}
-      />
+      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <Text style={styles.linkText}>Don't have an account? Register</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -140,6 +139,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingLeft: 8,
     marginBottom: 12,
+  },
+  linkText: {
+    color: 'blue', // Choose a color that looks like a link
+    textDecorationLine: 'underline',
+    marginTop: 20, // Adjust spacing as needed
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 

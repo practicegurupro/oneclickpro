@@ -2,6 +2,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import UserContext from '../context/UserContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth'; // Import Firebase Auth
 
 const CategoryScreen = () => {
   const { user } = useContext(UserContext);
@@ -14,15 +15,24 @@ const CategoryScreen = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        console.log('User ID Token:', user.idToken);
+        // Refresh the idToken
+        const idToken = await auth().currentUser?.getIdToken(true);
+        console.log('Retrieved ID token:', idToken); // Debugging: Log the ID token
+
+        if (!idToken) {
+          throw new Error('Failed to retrieve ID token');
+        }
+
+        console.log('Attempting to fetch new subscription details');
 
         const response = await fetch('https://oneclickbranding.ai/newsubscriptiondetails.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`, // Use the refreshed ID token
           },
           body: JSON.stringify({
-            idToken: user.idToken,
+            idToken: idToken, // Send the ID token as a JSON object
           }),
         });
 
@@ -30,6 +40,8 @@ const CategoryScreen = () => {
         console.log('Raw response:', data);
 
         const jsonData = JSON.parse(data.trim());
+        console.log('Parsed JSON:', jsonData); // Debugging: Log the parsed JSON
+
         if (jsonData.success) {
           setSubscribedCategories(jsonData.subscribed_categories);
           setNonSubscribedCategories(jsonData.non_subscribed_categories);
@@ -48,12 +60,12 @@ const CategoryScreen = () => {
       setLoading(true); // Reset loading state when refetching
       fetchCategories(); // Fetch data when the screen is focused
     }
-  }, [isFocused, user.idToken]); // Re-fetch when the screen is focused
+  }, [isFocused]); // Re-fetch when the screen is focused
 
   const handleCategoryPress = (category) => {
     navigation.navigate('PostersTypesScreen', {
       selectedCategory: category,
-      idToken: user.idToken,
+      idToken: user.idToken, // Pass the ID token to the next screen
     });
   };
 

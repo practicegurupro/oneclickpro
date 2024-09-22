@@ -1,57 +1,67 @@
 import React, { useContext, useEffect, useState } from 'react';
-
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import UserContext from '../context/UserContext';  // Ensure UserContext is imported
-
+import UserContext from '../context/UserContext';
+import auth from '@react-native-firebase/auth';
 
 const PostersTypesScreen = ({ route, navigation }) => {
-  const { idToken, selectedCategory } = route.params; // Get the ID token and selected category name from the previous screen
+  const { selectedCategory } = route.params; // Get the selected category from the previous screen
   const [posterTypes, setPosterTypes] = useState([]);
   const { user } = useContext(UserContext);
 
   useEffect(() => {
-    // Fetch the poster types from the API
-    fetch('https://oneclickbranding.ai/fetch_posters_types.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        idToken: idToken,
-      }).toString(),
-    })
-      .then(response => response.json())
-      .then(data => {
+    const fetchPosterTypes = async () => {
+      try {
+        // Refresh the idToken
+        const idToken = await auth().currentUser?.getIdToken(true);
+        console.log('Retrieved ID token:', idToken);
+
+        if (!idToken) {
+          throw new Error('Failed to retrieve ID token');
+        }
+
+        // Fetch the poster types from the API
+        const response = await fetch('https://oneclickbranding.ai/fetch_posters_types.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            idToken: idToken,
+          }).toString(),
+        });
+
+        const data = await response.json();
+        console.log('Raw response:', data);
+
         if (data.success) {
           setPosterTypes(data.poster_types);
         } else {
           console.error('Error fetching poster types:', data.message);
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
-  }, [idToken]);
+      } catch (error) {
+        console.error('Error fetching poster types:', error);
+      }
+    };
+
+    fetchPosterTypes(); // Fetch data on component mount
+  }, []);
 
   // Ensure that selectedCategory is a string
   const categoryName = typeof selectedCategory === 'object' ? selectedCategory.category_name : selectedCategory;
-  
-
 
   const handlePosterTypePress = (posterType) => {
     // Extract category_name from the selectedCategory object
     const categoryName = selectedCategory.category_name;
     const categoryId = selectedCategory.id; 
 
-      // Log the categoryId to see if it's being extracted correctly
-  console.log('Extracted categoryId:', categoryId);
-    
-  
+    // Log the categoryId to see if it's being extracted correctly
+    console.log('Extracted categoryId:', categoryId);
+
     if (!categoryName || typeof categoryName !== 'string') {
       console.error('Invalid categoryName:', categoryName);
       return;
     }
-  
+
     let tableName;
     if (posterType === 'Marketing Posters') {
       // Use the main category table based on the selected category
@@ -60,7 +70,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
       // Convert the poster type name to a table name
       tableName = `${posterType.toLowerCase().replace(/\s+/g, '_')}`;
     }
-  
+
     console.log('Navigating to PostersListScreen with:', {
       tableName: tableName,
       selectedCategory: categoryName,
@@ -68,7 +78,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
       posterType: posterType,
       idToken: user.idToken
     });
-  
+
     navigation.navigate('PostersListScreen', {
       tableName: tableName,
       selectedCategory: categoryName,
@@ -77,8 +87,6 @@ const PostersTypesScreen = ({ route, navigation }) => {
       idToken: user.idToken // Pass the ID token
     });
   };
-  
-  
 
   return (
     <View style={styles.container}>
@@ -94,7 +102,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
             <Text style={styles.boxText}>{item.poster_type_name}</Text>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={() => <Text>No poster types available</Text>} 
+        ListEmptyComponent={() => <Text>No poster types available</Text>}
       />
     </View>
   );

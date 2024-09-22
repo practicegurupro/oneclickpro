@@ -1,9 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
 import UserContext from '../context/UserContext';
+import auth from '@react-native-firebase/auth';
 
 const PostersListScreen = ({ route, navigation }) => {
-  const { selectedCategory, selectedCategoryId, tableName, idToken } = route.params;
+  const { selectedCategory, selectedCategoryId, tableName } = route.params;
   const [posters, setPosters] = useState([]);
   const [filteredPosters, setFilteredPosters] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -13,55 +14,67 @@ const PostersListScreen = ({ route, navigation }) => {
   const { user } = useContext(UserContext);
 
   useEffect(() => {
-    // Fetch the posters list from the API
-    fetch('https://oneclickbranding.ai/fetch_posters_list.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        idToken: idToken,
-        tableName: tableName,
-      }).toString(),
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          setPosters(data.posters);
-          setFilteredPosters(data.posters); // Initially, all posters are shown
-        } else {
-          console.error('Error fetching posters:', data.message);
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+    const fetchPostersAndSubscriptionStatus = async () => {
+      try {
+        // Refresh the ID token
+        const idToken = await auth().currentUser?.getIdToken(true);
+        console.log('Retrieved ID token:', idToken);
 
-    // Fetch the latest subscription status from the API
-    fetch('https://oneclickbranding.ai/subscription_status.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        idToken: idToken,
-        categoryId: selectedCategoryId,
-      }).toString(),
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          setIsSubscribed(data.isSubscribed);
-          setContactBar(data.contactbar || 'yourfirmcontactbartaxprofessional.png');
-          setWatermark(data.watermark || 'OneClick Branding');
-        } else {
-          console.error('Error fetching subscription status:', data.message);
+        if (!idToken) {
+          throw new Error('Failed to retrieve ID token');
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
-  }, [idToken, selectedCategoryId, tableName]);
+
+        // Fetch the posters list from the API
+        const postersResponse = await fetch('https://oneclickbranding.ai/fetch_posters_list.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            idToken: idToken,
+            tableName: tableName,
+          }).toString(),
+        });
+
+        const postersData = await postersResponse.json();
+        console.log('Posters response:', postersData);
+
+        if (postersData.success) {
+          setPosters(postersData.posters);
+          setFilteredPosters(postersData.posters); // Initially, all posters are shown
+        } else {
+          console.error('Error fetching posters:', postersData.message);
+        }
+
+        // Fetch the latest subscription status from the API
+        const subscriptionResponse = await fetch('https://oneclickbranding.ai/subscription_status.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            idToken: idToken,
+            categoryId: selectedCategoryId,
+          }).toString(),
+        });
+
+        const subscriptionData = await subscriptionResponse.json();
+        console.log('Subscription status response:', subscriptionData);
+
+        if (subscriptionData.success) {
+          setIsSubscribed(subscriptionData.isSubscribed);
+          setContactBar(subscriptionData.contactbar || 'yourfirmcontactbartaxprofessional.png');
+          setWatermark(subscriptionData.watermark || 'OneClick Branding');
+        } else {
+          console.error('Error fetching subscription status:', subscriptionData.message);
+        }
+      } catch (error) {
+        console.error('Error fetching posters or subscription status:', error);
+      }
+    };
+
+    fetchPostersAndSubscriptionStatus(); // Fetch data on component mount
+  }, [selectedCategoryId, tableName]);
 
   const handlePosterPress = (posterImageName) => {
     const posterImageUrl = isSubscribed
