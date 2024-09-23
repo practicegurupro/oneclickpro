@@ -24,6 +24,9 @@ const PostersTypesScreen = ({ route, navigation }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache', // Prevent caching
+            'Pragma': 'no-cache', // HTTP 1.0 compatibility
+            'Expires': '0', // Ensure response is not cached
           },
           body: new URLSearchParams({
             idToken: idToken,

@@ -30,6 +30,9 @@ const CategoryScreen = () => {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${idToken}`, // Use the refreshed ID token
+            'Cache-Control': 'no-cache', // Prevent caching
+            'Pragma': 'no-cache', // HTTP 1.0 compatibility
+            'Expires': '0', // Ensure response is not cached
           },
           body: JSON.stringify({
             idToken: idToken, // Send the ID token as a JSON object

@@ -1,91 +1,35 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import { View, Text, Image, Button, PermissionsAndroid, Platform, Alert, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Share as NativeShare } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import UserContext from '../context/UserContext';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
+import { useNavigation } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 const containerWidth = screenWidth * 0.9;
 const containerHeight = (containerWidth / 1080) * 1350;
 
 const ImageShareScreen = ({ route }) => {
-  const navigation = useNavigation();
+  const { posterImageUrl, selectedCategory, contactBarImageUrl, watermarkText } = route.params;
   const viewShotRef = useRef(null);
-  const { selectedCategory, selectedCategoryId, posterImageUrl } = route.params;
   const { user } = useContext(UserContext);
-  const isFocused = useIsFocused(); // Hook to detect if the screen is focused
-  const [contactBarImageUrl, setContactBarImageUrl] = useState('');
-  const [watermarkText, setWatermarkText] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Button
-          onPress={() => navigation.navigate('CategoryScreen')}
-          title="Go to Home"
-          color="#000"
-        />
-      ),
-    });
-  }, [navigation]);
-
-  useEffect(() => {
-    if (isFocused) {
-      const fetchContactBar = async () => {
-        try {
-          // Refresh the ID token
-          const idToken = await auth().currentUser?.getIdToken(true);
-          console.log('Retrieved ID token:', idToken);
-
-          if (!idToken) {
-            throw new Error('Failed to retrieve ID token');
-          }
-
-          const currentDate = new Date();
-          const subscription = user.subscribedCategories.find(category => category.id === selectedCategoryId);
-          const isSubscribed = subscription && new Date(subscription.end_date) >= currentDate;
-
-          console.log('Is Subscribed (Paid) Category:', isSubscribed);
-
-          if (isSubscribed) {
-            const response = await fetch('https://oneclickbranding.ai/fetch_contactbar.php', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: new URLSearchParams({
-                idToken: idToken,
-                categoryId: selectedCategoryId,
-              }).toString(),
-            });
-
-            const data = await response.text();
-            console.log('Raw response:', data);
-
-            const jsonData = JSON.parse(data.trim());
-            if (jsonData.success && jsonData.contactbar) {
-              setContactBarImageUrl(`https://practiceguru.pro/images/${jsonData.contactbar}`);
-              setWatermarkText(jsonData.watermark || 'OneClick Branding');
-            } else {
-              throw new Error('Invalid API response or contact bar not found.');
-            }
-          } else {
-            setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
-            setWatermarkText('OneClick Branding');
-          }
-        } catch (error) {
-          console.error('Error fetching contact bar:', error);
-          setContactBarImageUrl('https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png');
-          setWatermarkText('OneClick Branding');
-        }
-      };
-
-      fetchContactBar(); // Fetch the contact bar when the screen is focused
+    console.log('Platform.OS:', Platform.OS); // Debugging log
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      navigation.setOptions({
+        headerRight: () => (
+          <Button
+            onPress={() => navigation.navigate('CategoryScreen')}
+            title="Go to Home"
+            color="#000"
+          />
+        ),
+      });
     }
-  }, [isFocused, selectedCategoryId, user.subscribedCategories]);
+  }, [navigation]);
 
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 30) {
@@ -116,41 +60,35 @@ const ImageShareScreen = ({ route }) => {
       return;
     }
 
-    viewShotRef.current.capture().then(uri => {
-      RNFS.readFile(uri, 'base64').then((base64data) => {
-        let shareImage = {
-          url: `data:image/png;base64,${base64data}`,
-          type: 'image/png',
-        };
+    try {
+      const uri = await viewShotRef.current.capture(); // Capture the screenshot
+      const base64data = await RNFS.readFile(uri, 'base64');
+      
+      let shareImage = {
+        url: `data:image/png;base64,${base64data}`,
+        type: 'image/png',
+      };
 
-        Share.open(shareImage)
-          .then(res => console.log('Shared successfully: ', res))
-          .catch(err => console.log('Error while sharing: ', err));
-      });
-    }).catch(err => {
-      console.log('Error capturing screenshot: ', err);
-    });
+      await Share.open(shareImage);
+      console.log('Shared successfully');
+    } catch (err) {
+      console.error('Error while sharing:', err);
+    }
   };
 
   const handleShareImageIOS = async () => {
     try {
-      if (viewShotRef.current) {
-        const uri = await viewShotRef.current.capture();
-        const formattedUri = uri.startsWith('file://') ? uri : `file://${uri}`;
+      const uri = await viewShotRef.current.capture(); // Capture the screenshot
+      const formattedUri = uri.startsWith('file://') ? uri : `file://${uri}`;
 
-        const result = await NativeShare.share({
-          url: formattedUri,
-        });
+      const result = await NativeShare.share({
+        url: formattedUri,
+      });
 
-        if (result.action === NativeShare.sharedAction) {
-          if (result.activityType) {
-            console.log('Image shared successfully');
-          } else {
-            console.log('Sharing completed');
-          }
-        } else if (result.action === NativeShare.dismissedAction) {
-          console.log('Share dialog dismissed');
-        }
+      if (result.action === NativeShare.sharedAction) {
+        console.log('Image shared successfully');
+      } else if (result.action === NativeShare.dismissedAction) {
+        console.log('Share dialog dismissed');
       }
     } catch (error) {
       console.error('Error sharing screenshot on iOS:', error.message);
@@ -159,6 +97,7 @@ const ImageShareScreen = ({ route }) => {
 
   return (
     <View style={styles.container}>
+    
       <Text style={styles.userName}>{user?.email || 'User Name'}</Text>
       <Text style={styles.categoryName}>{selectedCategory}</Text>
 
@@ -177,7 +116,7 @@ const ImageShareScreen = ({ route }) => {
             />
           </View>
         </ViewShot>
-
+        
         {Platform.OS === 'android' ? (
           <Button title="Capture and Share on Android" onPress={captureAndShareScreenshotAndroid} />
         ) : (
@@ -197,6 +136,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  header: {
+    width: '100%',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    alignItems: 'flex-end',
   },
   scrollContent: {
     flexGrow: 1,

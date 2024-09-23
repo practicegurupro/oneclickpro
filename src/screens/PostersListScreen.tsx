@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
 import UserContext from '../context/UserContext';
 import auth from '@react-native-firebase/auth';
+import { useIsFocused } from '@react-navigation/native';
 
 const PostersListScreen = ({ route, navigation }) => {
   const { selectedCategory, selectedCategoryId, tableName } = route.params;
@@ -11,11 +12,15 @@ const PostersListScreen = ({ route, navigation }) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [contactBar, setContactBar] = useState('');
   const [watermark, setWatermark] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state for API calls
   const { user } = useContext(UserContext);
+  const isFocused = useIsFocused(); // Hook to detect if screen is focused
 
   useEffect(() => {
     const fetchPostersAndSubscriptionStatus = async () => {
       try {
+        setLoading(true); // Start loading
+
         // Refresh the ID token
         const idToken = await auth().currentUser?.getIdToken(true);
         console.log('Retrieved ID token:', idToken);
@@ -29,6 +34,9 @@ const PostersListScreen = ({ route, navigation }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache', // Prevent caching
+            'Pragma': 'no-cache', // HTTP 1.0 compatibility
+            'Expires': '0', // Ensure response is not cached
           },
           body: new URLSearchParams({
             idToken: idToken,
@@ -51,6 +59,9 @@ const PostersListScreen = ({ route, navigation }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache', // Prevent caching
+            'Pragma': 'no-cache', // HTTP 1.0 compatibility
+            'Expires': '0', // Ensure response is not cached
           },
           body: new URLSearchParams({
             idToken: idToken,
@@ -70,11 +81,15 @@ const PostersListScreen = ({ route, navigation }) => {
         }
       } catch (error) {
         console.error('Error fetching posters or subscription status:', error);
+      } finally {
+        setLoading(false); // Stop loading once data is fetched
       }
     };
 
-    fetchPostersAndSubscriptionStatus(); // Fetch data on component mount
-  }, [selectedCategoryId, tableName]);
+    if (isFocused) {
+      fetchPostersAndSubscriptionStatus(); // Fetch data when the screen is focused
+    }
+  }, [isFocused, selectedCategoryId, tableName]); // Add isFocused to the dependency array
 
   const handlePosterPress = (posterImageName) => {
     const posterImageUrl = isSubscribed
@@ -91,7 +106,8 @@ const PostersListScreen = ({ route, navigation }) => {
       selectedCategoryId: selectedCategoryId,
       idToken: user.idToken,
       contactBarImageUrl: contactBarImageUrl,
-      watermarkText: watermark
+      watermarkText: watermark,
+      isSubscribed: isSubscribed, 
     });
   };
 
@@ -124,19 +140,25 @@ const PostersListScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search posters..."
-        value={searchQuery}
-        onChangeText={handleSearch}
-      />
-      <FlatList
-        data={filteredPosters}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderPosterItem}
-        ListEmptyComponent={() => <Text>No posters available</Text>}
-        numColumns={2} // Display 2 posters per row
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search posters..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          <FlatList
+            data={filteredPosters}
+            keyExtractor={item => item.id.toString()}
+            renderItem={renderPosterItem}
+            ListEmptyComponent={() => <Text>No posters available</Text>}
+            numColumns={2} // Display 2 posters per row
+          />
+        </>
+      )}
     </View>
   );
 };

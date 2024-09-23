@@ -4,7 +4,7 @@ import auth from '@react-native-firebase/auth';
 import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { IconButton } from 'react-native-paper';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -20,6 +20,12 @@ const Login = ({ navigation }: Props) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { setUser } = useContext(UserContext);
+
+   // Function to toggle password visibility
+   const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
 
   const handleLogin = () => {
     if (!email || !password) {
@@ -102,9 +108,11 @@ const Login = ({ navigation }: Props) => {
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Icon name={showPassword ? 'visibility' : 'visibility-off'} size={24} color="gray" />
-        </TouchableOpacity>
+     <TouchableOpacity onPress={togglePasswordVisibility}>
+     <Text style={styles.toggleText}>
+            {showPassword ? 'Hide' : 'Show'}
+          </Text>
+</TouchableOpacity>
       </View>
       <Button title="Login" onPress={handleLogin} />
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -145,7 +153,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginTop: 20, // Adjust spacing as needed
     fontSize: 16,
-    textAlign: 'center',
+      textAlign: 'center',
   },
 });
 

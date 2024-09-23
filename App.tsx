@@ -29,7 +29,7 @@ const MainStackNavigator = () => (
     <RootStack.Screen 
       name="CategoryScreen" 
       component={CategoryScreen} 
-      options={{ headerLeft: () => null }} // Remove back button for this screen
+     
     />
     <RootStack.Screen 
       name="PostersTypesScreen" 
@@ -44,7 +44,7 @@ const MainStackNavigator = () => (
     <RootStack.Screen 
       name="ImageShareScreen" 
       component={ImageShareScreen} 
-      options={{ headerLeft: () => null }} // Remove back button for this screen
+      
     />
     {/* Add more screens here as needed */}
   </RootStack.Navigator>
