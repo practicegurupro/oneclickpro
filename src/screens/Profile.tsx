@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, Platform, Linking, TouchableOpacity, ScrollView } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth'; // Import Firebase Auth
 import UserContext from '../context/UserContext';
@@ -65,6 +65,39 @@ const Profile = ({ navigation }) => {
     }
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: () => {
+            // Redirect to account deletion page
+            Linking.openURL('https://oneclickbranding.ai/user_account_delete_request.html');
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
+  const handleWhatsAppPress = () => {
+    const platformMessage = Platform.OS === 'ios' 
+      ? 'Hi, I am using your OneClickPro iOS app. I have a question, please contact me. Thanks.' 
+      : 'Hi, I am using your OneClickPro Android app. I have a question, please contact me. Thanks.';
+
+    const url = `https://wa.me/919136637325?text=${encodeURIComponent(platformMessage)}`;
+    Linking.openURL(url).catch((err) => {
+      console.error('Error opening WhatsApp:', err);
+      Alert.alert('Error', 'Unable to open WhatsApp.');
+    });
+  };
+
   useEffect(() => {
     if (isFocused) {
       fetchProfileData(); // Fetch data when the screen is focused
@@ -72,46 +105,64 @@ const Profile = ({ navigation }) => {
   }, [isFocused]);
 
   return (
-    <View style={styles.container}>
-      {loading ? (
-        <Text style={styles.info}>Loading...</Text>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {String(error)}</Text> {/* Ensure error is converted to string */}
-          <Button title="Retry" onPress={fetchProfileData} /> {/* Retry button to refetch data */}
-        </View>
-      ) : (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Basic Details</Text>
-            <Text style={styles.info}><Text style={styles.boldText}>Email:</Text> {profileData.email}</Text>
-            <Text style={styles.info}><Text style={styles.boldText}>Account Created At:</Text> {profileData.createdAt}</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        {loading ? (
+          <Text style={styles.info}>Loading...</Text>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Error: {String(error)}</Text> {/* Ensure error is converted to string */}
+            <Button title="Retry" onPress={fetchProfileData} /> {/* Retry button to refetch data */}
           </View>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Basic Details</Text>
+              <Text style={styles.info}><Text style={styles.boldText}>Email:</Text> {profileData.email}</Text>
+              <Text style={styles.info}><Text style={styles.boldText}>Account Created At:</Text> {profileData.createdAt}</Text>
+            </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Subscribed Categories</Text>
-            {profileData.subscribedCategories.length > 0 ? (
-              profileData.subscribedCategories.map((category, index) => (
-                <View key={index} style={styles.categoryContainer}>
-                  <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {category.category_name}</Text>
-                  <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {category.start_date}</Text>
-                  <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {category.end_date}</Text>
-                </View>
-              ))
-            ) : (
-              <Text>No categories subscribed yet.</Text>
+            {/* WhatsApp Button */}
+            <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppPress}>
+              <Text style={styles.whatsappButtonText}>Contact Us</Text>
+            </TouchableOpacity>
+
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Subscribed Categories</Text>
+              {profileData.subscribedCategories.length > 0 ? (
+                profileData.subscribedCategories.map((category, index) => (
+                  <View key={index} style={styles.categoryContainer}>
+                    <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {category.category_name}</Text>
+                    <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {category.start_date}</Text>
+                    <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {category.end_date}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text>No categories subscribed yet.</Text>
+              )}
+            </View>
+
+            {/* Add the Delete Account button only on iOS */}
+            {Platform.OS === 'ios' && (
+              <Button
+                title="Delete Account"
+                color="red"
+                onPress={handleDeleteAccount}
+              />
             )}
-          </View>
-        </>
-      )}
-    </View>
+          </>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    padding: 20,
+  },
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#f5f5f5', // Light background for contrast
   },
   card: {
@@ -139,6 +190,10 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     marginBottom: 10,
+    padding: 10,
+    borderWidth: 1, // Add a border
+    borderColor: '#ddd', // Light gray color for the border
+    borderRadius: 8, // Slightly round the borders
   },
   errorContainer: {
     justifyContent: 'center',
@@ -148,6 +203,18 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 10,
     fontSize: 16,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366', // WhatsApp green color
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  whatsappButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

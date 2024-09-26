@@ -91,17 +91,20 @@ const PostersListScreen = ({ route, navigation }) => {
     }
   }, [isFocused, selectedCategoryId, tableName]); // Add isFocused to the dependency array
 
-  const handlePosterPress = (posterImageName) => {
+  const handlePosterPress = (posterImageName, posterName) => {
+    console.log('Poster Name:', posterImageName);  // Log to ensure it's being passed correctly
+  
     const posterImageUrl = isSubscribed
       ? `https://oneclickbranding.ai/posters/paid/${posterImageName}`
       : `https://oneclickbranding.ai/posters/notpaid/${posterImageName}`;
-
+  
     const contactBarImageUrl = isSubscribed
       ? `https://practiceguru.pro/images/${contactBar}`
       : `https://practiceguru.pro/images/yourfirmcontactbartaxprofessional.png`;
-
+  
     navigation.navigate('ImageShareScreen', {
       posterImageUrl: posterImageUrl,
+      poster_name: posterName,  // Pass the poster_name to the next screen
       selectedCategory: selectedCategory,
       selectedCategoryId: selectedCategoryId,
       idToken: user.idToken,
@@ -129,9 +132,12 @@ const PostersListScreen = ({ route, navigation }) => {
     const posterImageUrl = isSubscribed
       ? `https://oneclickbranding.ai/posters/paid/${item.poster_image_url}`
       : `https://oneclickbranding.ai/posters/notpaid/${item.poster_image_url}`;
-
+  
     return (
-      <TouchableOpacity style={styles.posterContainer} onPress={() => handlePosterPress(item.poster_image_url)}>
+      <TouchableOpacity 
+        style={styles.posterContainer} 
+        onPress={() => handlePosterPress(item.poster_image_url, item.poster_name)} // Pass poster_name here
+      >
         <Image source={{ uri: posterImageUrl }} style={styles.posterImage} />
         <Text style={styles.posterName}>{item.poster_name}</Text>
       </TouchableOpacity>

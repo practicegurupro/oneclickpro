@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import UserContext from '../context/UserContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth'; // Import Firebase Auth
@@ -81,51 +81,48 @@ const CategoryScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Subscribed Categories</Text>
-      {subscribedCategories.length > 0 ? (
-        <FlatList
-          data={subscribedCategories}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleCategoryPress(item)}>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.sectionContainer}>
+        <Text style={styles.title}>Subscribed Categories</Text>
+        {subscribedCategories.length > 0 ? (
+          subscribedCategories.map((item) => (
+            <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)}>
               <View style={styles.categoryContainer}>
                 <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {item.category_name}</Text>
                 <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {item.start_date}</Text>
                 <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {item.end_date}</Text>
               </View>
             </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <Text>No subscriptions yet.</Text>
-      )}
+          ))
+        ) : (
+          <Text>No subscriptions yet.</Text>
+        )}
+      </View>
 
-      <Text style={styles.title}>Non-Subscribed Categories</Text>
-      {nonSubscribedCategories.length > 0 ? (
-        <FlatList
-          data={nonSubscribedCategories}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleCategoryPress(item)}>
+      <View style={styles.sectionContainer}>
+        <Text style={styles.title}>Non-Subscribed Categories</Text>
+        {nonSubscribedCategories.length > 0 ? (
+          nonSubscribedCategories.map((item) => (
+            <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)}>
               <View style={styles.categoryContainerTwoColumns}>
                 <Text style={styles.info}>{item.category_name}</Text>
               </View>
             </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <Text>All categories are subscribed.</Text>
-      )}
-    </View>
+          ))
+        ) : (
+          <Text>All categories are subscribed.</Text>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContainer: {
     padding: 20,
+  },
+  sectionContainer: {
+    marginBottom: 20,
   },
   title: {
     fontSize: 20,

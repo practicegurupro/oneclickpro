@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import UserContext from '../context/UserContext';
 import auth from '@react-native-firebase/auth';
 
 const PostersTypesScreen = ({ route, navigation }) => {
   const { selectedCategory } = route.params; // Get the selected category from the previous screen
   const [posterTypes, setPosterTypes] = useState([]);
+  const [loading, setLoading] = useState(true); // State for managing loading
   const { user } = useContext(UserContext);
 
   useEffect(() => {
@@ -43,6 +44,8 @@ const PostersTypesScreen = ({ route, navigation }) => {
         }
       } catch (error) {
         console.error('Error fetching poster types:', error);
+      } finally {
+        setLoading(false); // Set loading to false once the data is fetched
       }
     };
 
@@ -55,7 +58,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
   const handlePosterTypePress = (posterType) => {
     // Extract category_name from the selectedCategory object
     const categoryName = selectedCategory.category_name;
-    const categoryId = selectedCategory.id; 
+    const categoryId = selectedCategory.id;
 
     // Log the categoryId to see if it's being extracted correctly
     console.log('Extracted categoryId:', categoryId);
@@ -94,19 +97,23 @@ const PostersTypesScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.categoryTitle}>{categoryName}</Text>
-      <FlatList
-        data={posterTypes}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.box}
-            onPress={() => handlePosterTypePress(item.poster_type_name)}
-          >
-            <Text style={styles.boxText}>{item.poster_type_name}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={() => <Text>No poster types available</Text>}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" /> // Loader displayed while fetching data
+      ) : (
+        <FlatList
+          data={posterTypes}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.box}
+              onPress={() => handlePosterTypePress(item.poster_type_name)}
+            >
+              <Text style={styles.boxText}>{item.poster_type_name}</Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={() => <Text>No poster types available</Text>}
+        />
+      )}
     </View>
   );
 };

@@ -11,10 +11,14 @@ const containerWidth = screenWidth * 0.9;
 const containerHeight = (containerWidth / 1080) * 1350;
 
 const ImageShareScreen = ({ route }) => {
-  const { posterImageUrl, selectedCategory, contactBarImageUrl, watermarkText } = route.params;
+  const { posterImageUrl, poster_name, selectedCategory, contactBarImageUrl, watermarkText } = route.params;
   const viewShotRef = useRef(null);
   const { user } = useContext(UserContext);
   const navigation = useNavigation();
+
+
+   // Debugging - Check if poster_name is received
+   console.log('Poster Name:', poster_name);
 
   useEffect(() => {
     console.log('Platform.OS:', Platform.OS); // Debugging log
@@ -23,7 +27,7 @@ const ImageShareScreen = ({ route }) => {
         headerRight: () => (
           <Button
             onPress={() => navigation.navigate('CategoryScreen')}
-            title="Go to Home"
+            title="Go Home"
             color="#000"
           />
         ),
@@ -98,8 +102,9 @@ const ImageShareScreen = ({ route }) => {
   return (
     <View style={styles.container}>
     
-      <Text style={styles.userName}>{user?.email || 'User Name'}</Text>
-      <Text style={styles.categoryName}>{selectedCategory}</Text>
+     
+      <Text style={styles.categoryName}>Category: {selectedCategory}</Text>
+      <Text style={styles.posterName}>Poster Name: {poster_name}</Text>
 
       <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
         <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
@@ -118,10 +123,10 @@ const ImageShareScreen = ({ route }) => {
         </ViewShot>
         
         {Platform.OS === 'android' ? (
-          <Button title="Capture and Share on Android" onPress={captureAndShareScreenshotAndroid} />
+          <Button title="Share Poster" onPress={captureAndShareScreenshotAndroid} />
         ) : (
           <TouchableOpacity style={styles.shareButton} onPress={handleShareImageIOS}>
-            <Text style={styles.shareButtonText}>Capture and Share on iOS</Text>
+            <Text style={styles.shareButtonText}>Share Poster</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -196,7 +201,16 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: 'white',
     fontSize: 18,
-    marginTop: 10,
+    
+  },
+  categoryName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  posterName: {
+    fontSize: 16,
+    marginTop: 5,  // Adjust margin as needed
   },
 });
 
