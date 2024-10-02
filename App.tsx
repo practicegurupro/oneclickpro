@@ -11,6 +11,7 @@ import CategoryScreen from './src/screens/CategoryScreen';
 import PostersTypesScreen from './src/screens/PostersTypesScreen'; 
 import PostersListScreen from './src/screens/PostersListScreen.tsx'; 
 import ImageShareScreen from './src/screens/ImageShareScreen.tsx'; 
+import FAQScreen from './src/screens/FAQScreen'; 
 import Profile from './src/screens/Profile';
 import { UserProvider } from './src/context/UserContext'; // Import UserProvider
 
@@ -46,7 +47,10 @@ const MainStackNavigator = () => (
       component={ImageShareScreen} 
       
     />
-    {/* Add more screens here as needed */}
+      <RootStack.Screen 
+      name="FAQScreen" 
+      component={FAQScreen} // Add FAQ screen to the stack
+    />
   </RootStack.Navigator>
 );
 
@@ -78,6 +82,7 @@ const MainDrawerNavigator = () => (
   <Drawer.Navigator initialRouteName="Home">
     <Drawer.Screen name="Home" component={MainStackNavigator} />
     <Drawer.Screen name="Profile" component={Profile} />
+    <Drawer.Screen name="FAQ" component={FAQScreen} /> 
     <Drawer.Screen name="Logout" component={LogoutScreen} />
   </Drawer.Navigator>
 );

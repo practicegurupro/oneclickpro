@@ -123,9 +123,11 @@ const Profile = ({ navigation }) => {
             </View>
 
             {/* WhatsApp Button */}
-            <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppPress}>
-              <Text style={styles.whatsappButtonText}>Contact Us</Text>
-            </TouchableOpacity>
+            {Platform.OS === 'android' && (
+              <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppPress}>
+                <Text style={styles.whatsappButtonText}>Contact Us</Text>
+              </TouchableOpacity>
+            )}
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Subscribed Categories</Text>
