@@ -13,6 +13,7 @@ import PostersListScreen from './src/screens/PostersListScreen.tsx';
 import ImageShareScreen from './src/screens/ImageShareScreen.tsx'; 
 import FAQScreen from './src/screens/FAQScreen'; 
 import Profile from './src/screens/Profile';
+import OTPVerificationScreen from './src/screens/OTPVerificationScreen'; 
 import { UserProvider } from './src/context/UserContext'; // Import UserProvider
 
 const RootStack = createStackNavigator();
@@ -22,6 +23,8 @@ const AuthStackNavigator = () => (
   <RootStack.Navigator initialRouteName="Login">
     <RootStack.Screen name="Login" component={Login} />
     <RootStack.Screen name="Register" component={Register} />
+    <RootStack.Screen name="OTPVerificationScreen" component={OTPVerificationScreen} /> 
+
   </RootStack.Navigator>
 );
 
@@ -62,7 +65,11 @@ const LogoutScreen = ({ navigation }) => {
       .signOut()
       .then(() => {
         setTimeout(() => {
-          navigation.navigate('Login'); // Navigate to Login
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }], // Navigate to the root of Auth stack
+          });
+          
         }, 100); // 100ms delay
       })
       .catch((error) => {

@@ -111,8 +111,8 @@ const Profile = ({ navigation }) => {
           <Text style={styles.info}>Loading...</Text>
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Error: {String(error)}</Text> {/* Ensure error is converted to string */}
-            <Button title="Retry" onPress={fetchProfileData} /> {/* Retry button to refetch data */}
+            <Text style={styles.errorText}>Error: {String(error)}</Text> 
+            <Button title="Retry" onPress={fetchProfileData} /> 
           </View>
         ) : (
           <>
