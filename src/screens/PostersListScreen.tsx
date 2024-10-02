@@ -206,7 +206,11 @@ const PosterListContent = ({ language, route, navigation }) => {
 // Main PosterListScreen with Tab Navigator
 const PostersListScreen = ({ route, navigation }) => {
   return (
-    <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
+    <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}
+    screenOptions={{
+      lazy: true,  
+    }}
+    >
       <Tab.Screen
         name="EnglishPosters"
         children={() => <PosterListContent language="English" route={route} navigation={navigation} />}
