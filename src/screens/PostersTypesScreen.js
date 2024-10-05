@@ -75,7 +75,7 @@ const SectionwisePosters = ({ route, navigation }) => {
     <View style={styles.container}>
       <Text style={styles.categoryTitle}>{categoryName}</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" /> // Loader displayed while fetching data
+        <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
           data={posterTypes}
@@ -101,7 +101,47 @@ const SearchPosters = ({ route, navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [contactBar, setContactBar] = useState('yourfirmcontactbartaxprofessional.png'); // Default for unsubscribed users
+  const [watermark, setWatermark] = useState('OneClick Branding'); // Default for unsubscribed users
   const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const idToken = await auth().currentUser?.getIdToken(true);
+        if (!idToken) {
+          throw new Error('Failed to retrieve ID token');
+        }
+
+        // Fetch subscription status, contact bar, and watermark
+        const response = await fetch('https://oneclickbranding.ai/subscription_status.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache',
+          },
+          body: new URLSearchParams({
+            idToken: idToken,
+            categoryId: selectedCategory.id,
+          }).toString(),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          if (data.isSubscribed) {
+            setContactBar(data.contactbar || 'yourfirmcontactbartaxprofessional.png');
+            setWatermark(data.watermark || 'OneClick Branding');
+          }
+        } else {
+          console.error('Error fetching subscription status:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, [selectedCategory]);
 
   const handleSearch = async () => {
     try {
@@ -121,7 +161,7 @@ const SearchPosters = ({ route, navigation }) => {
         },
         body: new URLSearchParams({
           idToken: idToken,
-          searchTerm: searchQuery, // Send the search query entered by the user
+          searchTerm: searchQuery,
           categoryName: selectedCategory.category_name, // Send the selected category name
         }).toString(),
       });
@@ -144,8 +184,14 @@ const SearchPosters = ({ route, navigation }) => {
       ? `https://oneclickbranding.ai/posters/paid/${posterImageName}`
       : `https://oneclickbranding.ai/posters/notpaid/${posterImageName}`;
 
+    console.log('isSubscribed:', isSubscribed);
+    console.log('Poster URL:', posterImageUrl);
+
     navigation.navigate('ImageShareScreen', {
       posterImageUrl: posterImageUrl,
+      contactBarImageUrl: `https://practiceguru.pro/images/${contactBar}`,
+      watermarkText: watermark,
+      isSubscribed: isSubscribed,
     });
   };
 
@@ -166,22 +212,24 @@ const SearchPosters = ({ route, navigation }) => {
         <FlatList
           data={searchResults}
           keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.posterContainer}
-              onPress={() => handlePosterPress(item.poster_image_url)}
-            >
-              <Image
-                source={{
-                  uri: isSubscribed
-                    ? `https://oneclickbranding.ai/posters/paid/${item.poster_image_url}`
-                    : `https://oneclickbranding.ai/posters/notpaid/${item.poster_image_url}`,
-                }}
-                style={styles.posterImage}
-              />
-              <Text style={styles.posterName}>{item.poster_name}</Text>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            const posterImageUrl = isSubscribed
+              ? `https://oneclickbranding.ai/posters/paid/${item.poster_image_url}`
+              : `https://oneclickbranding.ai/posters/notpaid/${item.poster_image_url}`;
+
+            return (
+              <TouchableOpacity
+                style={styles.posterContainer}
+                onPress={() => handlePosterPress(item.poster_image_url)}
+              >
+                <Image
+                  source={{ uri: posterImageUrl }}
+                  style={styles.posterImage}
+                />
+                <Text style={styles.posterName}>{item.poster_name}</Text>
+              </TouchableOpacity>
+            );
+          }}
           ListEmptyComponent={() => <Text>No posters found</Text>}
           numColumns={2} // Display 2 posters per row
         />
@@ -194,15 +242,30 @@ const SearchPosters = ({ route, navigation }) => {
 const PostersTypesScreen = ({ route, navigation }) => {
   const { selectedCategory, isSubscribed } = route.params;
 
+  console.log('Selected Category:', selectedCategory);
+  console.log('isSubscribed passed from previous page:', isSubscribed); // Add this log for debugging
+
   return (
     <Tab.Navigator>
       <Tab.Screen
         name="Sectionwise Posters"
-        children={() => <SectionwisePosters route={route} navigation={navigation} />}
+        children={() => (
+          <SectionwisePosters
+            route={route}
+            navigation={navigation}
+            isSubscribed={isSubscribed} // Pass subscription status
+          />
+        )}
       />
       <Tab.Screen
         name="Search Posters"
-        children={() => <SearchPosters route={route} navigation={navigation} />}
+        children={() => (
+          <SearchPosters
+            route={route}
+            navigation={navigation}
+            isSubscribed={isSubscribed} // Pass subscription status
+          />
+        )}
       />
     </Tab.Navigator>
   );

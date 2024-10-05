@@ -66,9 +66,12 @@ const CategoryScreen = () => {
   }, [isFocused]); // Re-fetch when the screen is focused
 
   const handleCategoryPress = (category) => {
+    const isSubscribed = subscribedCategories.some((sub) => sub.id === category.id); // Check if category is in the subscribed list
+  
     navigation.navigate('PostersTypesScreen', {
-      selectedCategory: category,
-      idToken: user.idToken, 
+      selectedCategory: category, // Sends the selected category object
+      idToken: user.idToken, // Sends the user's ID token
+      isSubscribed, // Sends whether the user is subscribed to the category
     });
   };
 
