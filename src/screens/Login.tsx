@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -92,32 +92,40 @@ const Login = ({ navigation }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
+      <View style={styles.formContainer}>
+        <Image
+          source={{ uri: 'https://oneclickbranding.ai/indexfiles/oneclickLogo.png' }}
+          style={styles.logo}
         />
-     <TouchableOpacity onPress={togglePasswordVisibility}>
-     <Text style={styles.toggleText}>
-            {showPassword ? 'Hide' : 'Show'}
-          </Text>
-</TouchableOpacity>
+        <Text style={styles.title}>Login</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={togglePasswordVisibility}>
+            <Text style={styles.toggleText}>
+              {showPassword ? 'Hide' : 'Show'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.loginButtonText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.linkText}>Don't have an account? Register</Text>
+        </TouchableOpacity>
       </View>
-      <Button title="Login" onPress={handleLogin} />
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -126,34 +134,79 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f4f7',
+  },
+  formContainer: {
+    width: '90%',
     padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5, // For Android shadow
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 30,
     textAlign: 'center',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 45,
+    borderColor: '#ddd',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingLeft: 8,
+    borderRadius: 8,
+    paddingLeft: 12,
+   
+    marginBottom: 15,
+    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    color: '#333',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: 'gray',
+    borderColor: '#ddd',
     borderWidth: 1,
-    paddingLeft: 8,
-    marginBottom: 12,
+    borderRadius: 8,
+    paddingVertical: 10, 
+    backgroundColor: '#f9f9f9',
+    paddingLeft: 12,
+    marginBottom: 20,
+  },
+  toggleText: {
+    marginRight: 10,
+    color: '#007BFF',
+    fontWeight: '500',
+  },
+  loginButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
   linkText: {
-    color: 'blue', // Choose a color that looks like a link
-    textDecorationLine: 'underline',
-    marginTop: 20, // Adjust spacing as needed
+    color: '#007BFF',
     fontSize: 16,
-      textAlign: 'center',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
 });
 

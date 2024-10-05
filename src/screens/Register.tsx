@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import UserContext from '../context/UserContext';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -17,11 +17,17 @@ type Props = {
 const Register = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mobile, setMobile] = useState(''); // Add state for mobile number
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
   const { setUser } = useContext(UserContext);
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const handleRegister = () => {
-    if (!email || !password) {
-      Alert.alert('Validation Error', 'Email and password cannot be blank.');
+    if (!email || !password || !mobile) {
+      Alert.alert('Validation Error', 'Email, password, and mobile cannot be blank.');
       return;
     }
 
@@ -44,7 +50,7 @@ const Register = ({ navigation }: Props) => {
         // Fetch the Firebase ID token after registration
         user.getIdToken().then(idToken => {
           // After getting the ID token, send data to PHP API to store in MySQL
-          saveUserToDatabase(user.email, password, user.uid, idToken);
+          saveUserToDatabase(user.email, password, mobile, user.uid, idToken);
         });
       })
       .catch(error => {
@@ -68,13 +74,14 @@ const Register = ({ navigation }: Props) => {
     return re.test(email);
   };
 
-  const saveUserToDatabase = (email: string, password: string, firebase_uid: string, idToken: string) => {
+  const saveUserToDatabase = (email: string, password: string, mobile: string, firebase_uid: string, idToken: string) => {
     const apiURL = 'https://oneclickbranding.ai/register_user.php';
 
     const postData = new URLSearchParams();
     postData.append('email', email);
     postData.append('password', password); // Send the plain password (PHP will hash it)
-    postData.append('firebase_uid', firebase_uid); 
+    postData.append('mobile', mobile); // Send the mobile number
+    postData.append('firebase_uid', firebase_uid);
     postData.append('idToken', idToken);
 
     fetch(apiURL, {
@@ -129,26 +136,48 @@ const Register = ({ navigation }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Register" onPress={handleRegister} />
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.linkText}>Already have an account? Login</Text>
-      </TouchableOpacity>
+      <View style={styles.formContainer}>
+        <Image
+          source={{ uri: 'https://oneclickbranding.ai/indexfiles/oneclickLogo.png' }}
+          style={styles.logo}
+        />
+        <Text style={styles.title}>Register</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile"
+          value={mobile}
+          onChangeText={setMobile}
+          keyboardType="phone-pad"
+        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword} // Toggle visibility based on showPassword state
+          />
+          <TouchableOpacity onPress={togglePasswordVisibility}>
+            <Text style={styles.toggleText}>
+              {showPassword ? 'Hide' : 'Show'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <Text style={styles.registerButtonText}>Register</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.linkText}>Already have an account? Login</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -157,26 +186,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f4f7',
+  },
+  formContainer: {
+    width: '90%',
     padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 30,
     textAlign: 'center',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 45,
+    borderColor: '#ddd',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingLeft: 8,
+    borderRadius: 8,
+    paddingLeft: 12,
+    marginBottom: 15,
+    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    color: '#333',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    backgroundColor: '#f9f9f9',
+    paddingLeft: 12,
+    marginBottom: 20,
+  },
+  toggleText: {
+    marginRight: 10,
+    color: '#007BFF',
+    fontWeight: '500',
+  },
+  registerButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
   linkText: {
-    color: 'blue', // Choose a color that looks like a link
-    textDecorationLine: 'underline',
-    marginTop: 20, // Adjust spacing as needed
+    color: '#007BFF',
     fontSize: 16,
-    textAlign: 'center', // Center the text within its container
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
 });
 

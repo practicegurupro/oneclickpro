@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, Button } from 'react-native'; // Import these from react-native
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native'; // Import these from react-native
 import auth from '@react-native-firebase/auth';
 import Login from './src/screens/Login';
 import Register from './src/screens/Register';
@@ -12,7 +12,11 @@ import PostersTypesScreen from './src/screens/PostersTypesScreen';
 import PostersListScreen from './src/screens/PostersListScreen.tsx'; 
 import ImageShareScreen from './src/screens/ImageShareScreen.tsx'; 
 import FAQScreen from './src/screens/FAQScreen'; 
+import AboutUs from './src/screens/AboutUs.tsx';
 import Profile from './src/screens/Profile';
+import EditProfile from './src/screens/EditProfile';
+import CustomDrawerContent from './src/screens/CustomDrawerContent.tsx';
+import ContactbarStyles from './src/screens/ContactbarStyles.tsx';
 import OTPVerificationScreen from './src/screens/OTPVerificationScreen'; 
 import { UserProvider } from './src/context/UserContext'; // Import UserProvider
 
@@ -50,6 +54,12 @@ const MainStackNavigator = () => (
       component={ImageShareScreen} 
       
     />
+
+<RootStack.Screen 
+      name="EditProfile" 
+      component={EditProfile} // Keep EditProfile in the stack
+    />
+
       <RootStack.Screen 
       name="FAQScreen" 
       component={FAQScreen} // Add FAQ screen to the stack
@@ -78,18 +88,57 @@ const LogoutScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Are you sure you want to log out?</Text>
-      <Button title="Logout" onPress={handleLogout} />
-    </View>
+    <View style={styles.container}>
+    <Text style={styles.text}>Are you sure you want to log out?</Text>
+    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      <Text style={styles.logoutButtonText}>Logout</Text>
+    </TouchableOpacity>
+  </View>
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f4f7',
+    padding: 20,
+  },
+  text: {
+    fontSize: 20,
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#d9534f',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    elevation: 3, // For a subtle shadow on Android
+  },
+  
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});
+
 const MainDrawerNavigator = () => (
-  <Drawer.Navigator initialRouteName="Home">
+
+  <Drawer.Navigator
+    initialRouteName="Home"
+    drawerContent={(props) => <CustomDrawerContent {...props} />} // Set the custom drawer
+  >
     <Drawer.Screen name="Home" component={MainStackNavigator} />
+    <Drawer.Screen name="About Us" component={AboutUs} />
     <Drawer.Screen name="Profile" component={Profile} />
+   
     <Drawer.Screen name="FAQ" component={FAQScreen} /> 
+    <Drawer.Screen name="Contactbar Styles" component={ContactbarStyles} />
     <Drawer.Screen name="Logout" component={LogoutScreen} />
   </Drawer.Navigator>
 );

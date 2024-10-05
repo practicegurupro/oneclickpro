@@ -68,7 +68,7 @@ const CategoryScreen = () => {
   const handleCategoryPress = (category) => {
     navigation.navigate('PostersTypesScreen', {
       selectedCategory: category,
-      idToken: user.idToken, // Pass the ID token to the next screen
+      idToken: user.idToken, 
     });
   };
 
@@ -82,36 +82,41 @@ const CategoryScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
+      {/* Subscribed Categories Section */}
       <View style={styles.sectionContainer}>
         <Text style={styles.title}>Subscribed Categories</Text>
-        {subscribedCategories.length > 0 ? (
-          subscribedCategories.map((item) => (
-            <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)}>
-              <View style={styles.categoryContainer}>
-                <Text style={styles.info}><Text style={styles.boldText}>Category:</Text> {item.category_name}</Text>
-                <Text style={styles.info}><Text style={styles.boldText}>Start Date:</Text> {item.start_date}</Text>
-                <Text style={styles.info}><Text style={styles.boldText}>End Date:</Text> {item.end_date}</Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text>No subscriptions yet.</Text>
-        )}
+        <View style={styles.categoryGrid}>
+          {subscribedCategories.length > 0 ? (
+            subscribedCategories.map((item) => (
+              <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)} style={styles.column}>
+                <View style={styles.categoryContainerTwoColumns}>
+                  <Text style={styles.info}>{item.category_name}</Text>
+                  <Text style={styles.info}><Text style={styles.boldText}>Ending on:</Text> {item.end_date}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>No subscriptions yet.</Text>
+          )}
+        </View>
       </View>
 
+      {/* Non-Subscribed Categories Section */}
       <View style={styles.sectionContainer}>
         <Text style={styles.title}>Non-Subscribed Categories</Text>
-        {nonSubscribedCategories.length > 0 ? (
-          nonSubscribedCategories.map((item) => (
-            <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)}>
-              <View style={styles.categoryContainerTwoColumns}>
-                <Text style={styles.info}>{item.category_name}</Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text>All categories are subscribed.</Text>
-        )}
+        <View style={styles.categoryGrid}>
+          {nonSubscribedCategories.length > 0 ? (
+            nonSubscribedCategories.map((item) => (
+              <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)} style={styles.column}>
+                <View style={styles.categoryContainerTwoColumns}>
+                  <Text style={styles.info}>{item.category_name}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>All categories are subscribed.</Text>
+          )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -136,13 +141,6 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: 'bold',
   },
-  categoryContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    elevation: 2,
-  },
   categoryContainerTwoColumns: {
     backgroundColor: '#fff',
     padding: 15,
@@ -151,6 +149,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 2,
     flex: 1, // Make sure the container takes up equal space
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allow items to wrap into the next row
+    justifyContent: 'space-between', // Space evenly between rows
+  },
+  column: {
+    flexBasis: '48%', // Adjust to take up half of the width, with some space in between
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
