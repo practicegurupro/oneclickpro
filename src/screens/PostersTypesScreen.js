@@ -82,13 +82,18 @@ const SectionwisePosters = ({ route, navigation }) => {
           keyExtractor={item => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.box}
+              style={styles.posterContainer}
               onPress={() => handlePosterTypePress(item.poster_type_name)}
             >
-              <Text style={styles.boxText}>{item.poster_type_name}</Text>
+              <View style={styles.box}>
+              {item.iconurl && (
+          <Image source={{ uri: item.iconurl }} style={styles.iconImage} />
+        )}
+              </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={() => <Text>No poster types available</Text>}
+          numColumns={2} 
         />
       )}
     </View>
@@ -248,7 +253,7 @@ const PostersTypesScreen = ({ route, navigation }) => {
   return (
     <Tab.Navigator>
       <Tab.Screen
-        name="Sectionwise Posters"
+        name="Sections"
         children={() => (
           <SectionwisePosters
             route={route}
@@ -284,11 +289,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   box: {
-    backgroundColor: '#ddd',
-    padding: 20,
-    marginVertical: 10,
+    backgroundColor: '#fff', // White background for the box
+    padding: 10,
     borderRadius: 10,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, // iOS shadow
+    shadowOpacity: 0.25, // iOS shadow
+    shadowRadius: 3.84, // iOS shadow
+    elevation: 5, // Android shadow
+    width: '100%',
+    alignItems: 'center', // Align content center horizontally
+    justifyContent: 'center', 
   },
   boxText: {
     fontSize: 18,
@@ -315,6 +326,13 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
     alignItems: 'center',
+    width: '40%',
+  },
+  iconImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+    resizeMode: 'contain',  // Ensure the image fits properly
   },
   posterImage: {
     width: '100%',

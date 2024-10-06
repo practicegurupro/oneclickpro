@@ -1,8 +1,8 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, Image } from 'react-native';
 import UserContext from '../context/UserContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth'; // Import Firebase Auth
+import auth from '@react-native-firebase/auth';
 
 const CategoryScreen = () => {
   const { user } = useContext(UserContext);
@@ -30,9 +30,9 @@ const CategoryScreen = () => {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${idToken}`, // Use the refreshed ID token
-            'Cache-Control': 'no-cache', // Prevent caching
-            'Pragma': 'no-cache', // HTTP 1.0 compatibility
-            'Expires': '0', // Ensure response is not cached
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Expires': '0',
           },
           body: JSON.stringify({
             idToken: idToken, // Send the ID token as a JSON object
@@ -46,6 +46,8 @@ const CategoryScreen = () => {
         console.log('Parsed JSON:', jsonData); // Debugging: Log the parsed JSON
 
         if (jsonData.success) {
+          console.log('Subscribed Categories:', jsonData.subscribed_categories);
+          console.log('Non-Subscribed Categories:', jsonData.non_subscribed_categories);
           setSubscribedCategories(jsonData.subscribed_categories);
           setNonSubscribedCategories(jsonData.non_subscribed_categories);
         } else {
@@ -63,7 +65,7 @@ const CategoryScreen = () => {
       setLoading(true); // Reset loading state when refetching
       fetchCategories(); // Fetch data when the screen is focused
     }
-  }, [isFocused]); // Re-fetch when the screen is focused
+  }, [isFocused]);
 
   const handleCategoryPress = (category) => {
     const isSubscribed = subscribedCategories.some((sub) => sub.id === category.id); // Check if category is in the subscribed list
@@ -93,8 +95,14 @@ const CategoryScreen = () => {
             subscribedCategories.map((item) => (
               <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)} style={styles.column}>
                 <View style={styles.categoryContainerTwoColumns}>
-                  <Text style={styles.info}>{item.category_name}</Text>
-                  <Text style={styles.info}><Text style={styles.boldText}>Ending on:</Text> {item.end_date}</Text>
+                  {item.iconurl && (
+                    <>
+                      <Image source={{ uri: item.iconurl }} style={styles.iconImage} />
+                     
+                    </>
+                  )}
+                  {/* <Text style={styles.info}>{item.category_name}</Text> */}
+                  <Text style={styles.info}><Text style={styles.boldText}>Expiry:</Text> {item.end_date}</Text>
                 </View>
               </TouchableOpacity>
             ))
@@ -112,6 +120,12 @@ const CategoryScreen = () => {
             nonSubscribedCategories.map((item) => (
               <TouchableOpacity key={item.id.toString()} onPress={() => handleCategoryPress(item)} style={styles.column}>
                 <View style={styles.categoryContainerTwoColumns}>
+                  {item.iconurl && (
+                    <>
+                      <Image source={{ uri: item.iconurl }} style={styles.iconImage} />
+                    
+                    </>
+                  )}
                   <Text style={styles.info}>{item.category_name}</Text>
                 </View>
               </TouchableOpacity>
@@ -146,25 +160,31 @@ const styles = StyleSheet.create({
   },
   categoryContainerTwoColumns: {
     backgroundColor: '#fff',
-    padding: 15,
+    padding: 5,
     marginVertical: 10,
-    marginHorizontal: 10, // Add horizontal margin for spacing between columns
+    marginHorizontal: 5,
     borderRadius: 10,
     elevation: 2,
-    flex: 1, // Make sure the container takes up equal space
+    flex: 1,
+    alignItems: 'center', // Center the icon
   },
   categoryGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Allow items to wrap into the next row
-    justifyContent: 'space-between', // Space evenly between rows
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   column: {
-    flexBasis: '48%', // Adjust to take up half of the width, with some space in between
+    flexBasis: '48%',
   },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  iconImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
   },
 });
 

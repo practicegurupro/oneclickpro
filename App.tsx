@@ -25,9 +25,9 @@ const Drawer = createDrawerNavigator();
 
 const AuthStackNavigator = () => (
   <RootStack.Navigator initialRouteName="Login">
-    <RootStack.Screen name="Login" component={Login} />
-    <RootStack.Screen name="Register" component={Register} />
-    <RootStack.Screen name="OTPVerificationScreen" component={OTPVerificationScreen} /> 
+    <RootStack.Screen name="Login" component={Login}       options={{ headerShown: false }}/>
+    <RootStack.Screen name="Register" component={Register}       options={{ headerShown: false }}/>
+    <RootStack.Screen name="OTPVerificationScreen" component={OTPVerificationScreen}       options={{ headerShown: false }} /> 
 
   </RootStack.Navigator>
 );
